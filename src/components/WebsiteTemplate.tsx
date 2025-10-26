@@ -1,6 +1,13 @@
 import React from 'react';
 
-export const WebsiteTemplate = ({ data, subtotal, tax, total }: { data: any, subtotal: number, tax: number, total: number }) => {
+interface WebsiteTemplateProps {
+	data: any;
+	subtotal: number;
+	tax: number;
+	total: number;
+}
+
+const WebsiteTemplate: React.FC<WebsiteTemplateProps> = ({ data, subtotal, tax, total }) => {
 	return (
 		<div className="font-sans text-sm text-gray-800">
 			<div className="text-center p-2 bg-blue-100 border-b">
@@ -92,3 +99,5 @@ export const WebsiteTemplate = ({ data, subtotal, tax, total }: { data: any, sub
 		</div>
 	);
 };
+
+export default WebsiteTemplate;

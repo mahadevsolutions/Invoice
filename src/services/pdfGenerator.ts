@@ -1,11 +1,11 @@
 import { RefObject } from 'react';
 
 // --- Type declaration for window properties ---
-// This tells TypeScript that jspdf and html2canvas will be available on the window
+// Declare optional properties on window to avoid strict errors when accessing them.
 declare global {
     interface Window {
-        jspdf: any;
-        html2canvas: any;
+        jspdf?: any;
+        html2canvas?: any;
     }
 }
 

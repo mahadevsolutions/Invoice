@@ -15,7 +15,7 @@ import { DigitalMarketingTemplate } from './DigitalMarketingTemplate';
 import { FormalTemplate } from './FormalTemplate';
 import { AgreementTemplate } from './AgreementTemplates';
 import { ModernTemplate } from './ModernTemplate';
-import { WebsiteTemplate } from './WebsiteTemplate';
+import WebsiteTemplate from './WebsiteTemplate';
 
 interface InvoicePreviewProps {
     data: any;
