@@ -22,16 +22,20 @@ const getCurrentDate = () => {
 export const VISUAL_TEMPLATES = {
     DIGITAL_MARKETING: 'Digital Marketing Style',
     AGREEMENT: 'Service Agreement Style',
+    TAX_INVOICE: 'Tax Invoice Style',
     MODERN: 'Modern Red Style',
     WEBSITE_DEVELOPMENT: 'Website Development Style',
+    PURCHASE_ORDER: 'Purchase Order Style',
+    PROFESSIONAL_QUOTATION: 'Professional Quotation Style',
     FORMAL: 'Formal Classic Style',
 };
 
 const defaultLogoUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7config+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7S9+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7Good9+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..";
 
 // --- Content Template Data ---
-const APP_DEV_TEMPLATE = {
-    name: "Invoices",
+// Renamed agreement template (keeps original data but a clearer constant/name)
+const APP_DEV_AGREEMENT_TEMPLATE = {
+    name: "App Dev Agreement",
     data: {
         companyName: 'MAHADEV SOLUTIONS',
         companyAddress: '',
@@ -51,21 +55,156 @@ const APP_DEV_TEMPLATE = {
             { service: 'Monthly Maintenance', description: 'Post-project monthly maintenance services to ensure the smooth operation of the apps.', cost: 7000, quantity: 1 },
         ],
         notes: 'If Mahadev Solutions fails to complete the project or discontinues the work, a full refund of the amount paid by the Client will be provided.',
+        gstType: 'CGST/SGST',
         template: VISUAL_TEMPLATES.AGREEMENT,
         logoSrc: defaultLogoUrl
     }
 };
 
+// New preset templates (placeholders for now)
+const INVOICE_TEMPLATE = {
+    name: 'Invoice',
+    data: {
+        // Company
+        companyName: 'NUTHANA ENTERPRISES',
+        companyAddress: '2-1-38, ROAD NO 4, PLOT NO 38, SRI VENKATESWARA\nCOLONY, BANDLAGUDA JAGIR, HYDERABAD',
+        companyEmail: 'nuthanasales@gmail.com',
+        companyPhone: '6304569149',
+        companyGstin: '36AAVFN0075F1Z2',
+        companyBankName: 'ICICI BANK',
+        companyAccountNo: '197405500089',
+        companyBankBranch: 'Bandlaguda, Hyderabad & ICIC0001974',
 
+        // Buyer (Bill-to)
+        clientName: 'MAHADEV SOLUTIONS',
+        clientAddress: 'Plot No.21, H.No.3-24/74, Vikas Nagar Colony,\nSai Baba Temple, Bandlaguda Jagir, Hyderbad,\nRangareddy, Telangana, 500086',
+        clientPhone: '+91-84668 88128',
+        clientContactPerson: 'Mr.Srinu',
+        clientGstin: '36ACEFM8212G1ZB',
+        clientPan: '',
 
+        // Consignee (Ship-to)
+        consigneeName: 'MAHADEV SOLUTIONS',
+        consigneeAddress: 'Plot No.21, H.No.3-24/74, Vikas Nagar Colony,\nSai Baba Temple, Bandlaguda Jagir, Hyderbad,\nRangareddy, Telangana, 500086',
+        consigneeGstin: '36ACEFM8212G1ZB',
+        consigneeState: 'Telangana, Code: 36',
+        consigneeContactPerson: 'Mr.Srinu',
+        consigneeContact: '+91-84668 88128',
 
-// Only keep a single preset data template. Visual style remains selectable separately.
-const PRESET_DATA_TEMPLATES = [APP_DEV_TEMPLATE];
+        // Document Details
+        invoiceTitle: 'Tax Invoice',
+        projectSubject: 'e-Invoice',
+        date: '3-Nov-25',
+        quotationNumber: 'NE/NOV-433/25-26',
+
+        // Dispatch
+        deliveryNote: '',
+        buyersOrderNo: '',
+        dispatchDocNo: '',
+        dispatchedThrough: '',
+        destination: '',
+        termsOfDelivery: '',
+
+        // Items
+        items: [
+            { service: 'YZuri/BL', description: '', cost: 8400, quantity: 3, itemNumber: '1', unit: 'EACH', hsn: '83014090', gstRate: 18 },
+            { service: 'Yale Access Multi Bridge', description: '', cost: 2625, quantity: 3, itemNumber: '2', unit: 'EACH', hsn: '83016000', gstRate: 18 },
+            { service: 'YPVL-902-BM', description: '', cost: 2730, quantity: 23, itemNumber: '3', unit: 'PRS', hsn: '83024110', gstRate: 18 },
+            { service: '24-8560BRSS04 PBM', description: '', cost: 840, quantity: 5, itemNumber: '4', unit: 'pcs', hsn: '83016000', gstRate: 18 },
+        ],
+
+        // Footer & Totals
+        notes: '',
+        declaration: 'We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.',
+        roundOff: 0.06,
+        gstType: 'CGST/SGST',
+        template: VISUAL_TEMPLATES.TAX_INVOICE,
+        logoSrc: defaultLogoUrl,
+    }
+};
+
+const PURCHASE_ORDER_TEMPLATE = {
+    name: "Purchase Order",
+    data: {
+        companyName: 'MAHADEV SOLUTIONS',
+        companyAddress: '123 Tech Road\nVisakhapatnam, AP 530001',
+        companyEmail: 'mahadevsolution7@gmail.com',
+        companyPhone: '9030602967',
+        clientName: 'Supplier Name',
+        clientCompany: 'Supplier Company Inc.',
+        clientAddress: '456 Supplier Ave\nHyderabad, TS 500001',
+        projectSubject: 'Procurement of Office Supplies',
+        invoiceTitle: 'Purchase Order',
+        date: getCurrentDate(),
+        quotationNumber: 'PO-2025-001',
+        items: [
+            { service: 'Product XYZ', description: 'Item Model #123-ABC', cost: 150, quantity: 10, itemNumber: 'XYZ-123', unit: 'PCS' },
+            { service: 'Product ABC', description: 'Item Model #456-DEF', cost: 75, quantity: 5, itemNumber: 'ABC-456', unit: 'PCS' },
+        ],
+        notes: 'All items subject to inspection upon delivery. Payment terms: NET 30.',
+        template: VISUAL_TEMPLATES.PURCHASE_ORDER,
+        logoSrc: defaultLogoUrl,
+
+        // PO-Specific Fields
+        deliveryAddress: 'MAHADEV SOLUTIONS\n123 Tech Road\nVisakhapatnam, AP 530001',
+        deliveryDate: getCurrentDate(),
+        requisitioner: 'Project Manager',
+        shipVia: 'FedEx Ground',
+        fob: 'Origin',
+        shippingCost: 50,
+    }
+};
+
+const QUOTATION_TEMPLATE = {
+    name: "Quotation",
+    data: {
+        companyName: 'M/S MAHADEV SOLUTIONS',
+        companyAddress: 'Plot No. 21, H.No. 3-24/74, Vikas Nagar Colony, Near Sai baba Temple, Bandlaguda Jagir,\nHyderabad, Telangana, India - 500086',
+        companyEmail: 'mahadevsolutions@outlook.com',
+        companyPhone: '+91 90306 02967',
+        companyGstin: '36ACEFM8212G1ZB',
+        companyPan: 'ACEFM8212G',
+
+        clientName: 'HIPEX INFRA',
+        clientCompany: '',
+        clientAddress: 'Legend Chiems, Villa No-299, Gandipet,\nHyderabad, Telangana, India - 500075',
+        clientPhone: '+91 84668 88128',
+        clientGstin: '37AAPFH8903C1Z9',
+        clientPan: 'AAPFH8903C',
+
+        projectSubject: 'Supply of Goods',
+        invoiceTitle: 'Quotation',
+        date: getCurrentDate(),
+        quotationNumber: 'Q-001',
+
+        items: [
+            { service: 'YZuri/BL', description: '', cost: 10800, quantity: 3, itemNumber: '1', unit: 'PCS', hsn: '83014090', gstRate: 18 },
+            { service: 'Yale Access Multi Bridge', description: '', cost: 4000, quantity: 3, itemNumber: '2', unit: 'PCS', hsn: '83016000', gstRate: 18 },
+            { service: 'YPVL-902-BM', description: '', cost: 3880, quantity: 23, itemNumber: '3', unit: 'PCS', hsn: '83024110', gstRate: 18 },
+        ],
+
+        notes: '1. Payment: 100% Advance.\n2. Delivery: Within 2 weeks.\n3. Prices are inclusive of all taxes.',
+        template: VISUAL_TEMPLATES.PROFESSIONAL_QUOTATION,
+        logoSrc: defaultLogoUrl,
+
+        // Clear PO-specific fields
+        deliveryAddress: '',
+        deliveryDate: '',
+        requisitioner: '',
+        shipVia: '',
+        fob: '',
+        shippingCost: 0,
+        gstType: 'CGST/SGST',
+    }
+};
+
+// Expose all presets (order: Invoice, Purchase Order, Quotation, Agreement)
+const PRESET_DATA_TEMPLATES = [INVOICE_TEMPLATE, PURCHASE_ORDER_TEMPLATE, QUOTATION_TEMPLATE, APP_DEV_AGREEMENT_TEMPLATE];
 
 // The main application component
 export default function App() {
-    interface Item { service: string; description: string; cost: number; quantity: number }
-    const initialItem: Item = { service: '', description: '', cost: 0, quantity: 1 };
+    interface Item { service: string; description: string; cost: number; quantity: number; itemNumber: string; unit: string; hsn: string }
+    const initialItem: Item = { service: '', description: '', cost: 0, quantity: 1, itemNumber: '', unit: 'PCS', hsn: '' };
     
     // --- All State Management ---
     const [companyName, setCompanyName] = useState('');
@@ -75,9 +214,54 @@ export default function App() {
     const [clientName, setClientName] = useState('');
     const [clientCompany, setClientCompany] = useState('');
     const [clientAddress, setClientAddress] = useState('');
+    const [companyGstin, setCompanyGstin] = useState('');
+    const [companyPan, setCompanyPan] = useState('');
+    const [clientGstin, setClientGstin] = useState('');
+    const [clientPan, setClientPan] = useState('');
+    const [clientState, setClientState] = useState('');
+    const [clientContactPerson, setClientContactPerson] = useState('');
+    const [clientPhone, setClientPhone] = useState('');
+
+    // GST Type: 'CGST/SGST' or 'IGST'
+    const [gstType, setGstType] = useState('CGST/SGST');
+    const [globalTaxRate, setGlobalTaxRate] = useState(18);
+    // --- e-Invoice, Bank, Consignee, Dispatch & Footer fields ---
+
+
+    // Company additional details
+    const [companyBankName, setCompanyBankName] = useState('');
+    const [companyAccountNo, setCompanyAccountNo] = useState('');
+    const [companyBankBranch, setCompanyBankBranch] = useState('');
+
+    // Consignee (Ship-To)
+    const [consigneeName, setConsigneeName] = useState('');
+    const [consigneeAddress, setConsigneeAddress] = useState('');
+    const [consigneeGstin, setConsigneeGstin] = useState('');
+    const [consigneeState, setConsigneeState] = useState('');
+    const [consigneeContactPerson, setConsigneeContactPerson] = useState('');
+    const [consigneeContact, setConsigneeContact] = useState('');
+
+    // Dispatch & Delivery
+    const [deliveryNote, setDeliveryNote] = useState('');
+    const [buyersOrderNo, setBuyersOrderNo] = useState('');
+    const [dispatchDocNo, setDispatchDocNo] = useState('');
+    const [dispatchedThrough, setDispatchedThrough] = useState('');
+    const [destination, setDestination] = useState('');
+    const [termsOfDelivery, setTermsOfDelivery] = useState('');
+
+    // Totals & Footer
+    const [roundOff, setRoundOff] = useState(0);
+    const [declaration, setDeclaration] = useState('We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.');
     const [projectSubject, setProjectSubject] = useState('');
     const [date, setDate] = useState(getCurrentDate());
     const [quotationNumber, setQuotationNumber] = useState('');
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [deliveryDate, setDeliveryDate] = useState(getCurrentDate());
+    const [requisitioner, setRequisitioner] = useState('');
+    const [shipVia, setShipVia] = useState('');
+    const [fob, setFob] = useState('');
+    const [shippingCost, setShippingCost] = useState(0);
+    const [activeTemplateName, setActiveTemplateName] = useState(''); // Track selected preset
     const [invoiceTitle, setInvoiceTitle] = useState('');
     const [logoSrc, setLogoSrc] = useState(defaultLogoUrl);
     const [items, setItems] = useState<Item[]>([]);
@@ -132,11 +316,37 @@ export default function App() {
         setClientName(''); setClientCompany(''); setClientAddress('');
         setProjectSubject(''); setDate(getCurrentDate()); setQuotationNumber('');
         setItems([]); setNotes(''); setInvoiceTitle(''); setLogoSrc(defaultLogoUrl);
+        // Clear Purchase Order related fields
+        setDeliveryAddress(''); setDeliveryDate(getCurrentDate()); setRequisitioner('');
+        setShipVia(''); setFob(''); setShippingCost(0);
+        // Clear tax ID fields
+        setCompanyGstin(''); setCompanyPan('');
+        setClientGstin(''); setClientPan('');
+        setClientState('');
+        setClientContactPerson('');
+        setClientPhone('');
+
+        // Clear gst type
+        setGstType('CGST/SGST');
+        setGlobalTaxRate(18);
+        // Clear company bank
+        setCompanyBankName(''); setCompanyAccountNo(''); setCompanyBankBranch('');
+        // Clear consignee (ship-to)
+        setConsigneeName(''); setConsigneeAddress(''); setConsigneeGstin(''); setConsigneeState('');
+        setConsigneeContactPerson(''); setConsigneeContact('');
+        // Clear dispatch/delivery
+        setDeliveryNote(''); setBuyersOrderNo(''); setDispatchDocNo(''); setDispatchedThrough('');
+        setDestination(''); setTermsOfDelivery('');
+        // Clear totals/footer
+        setRoundOff(0); setDeclaration('We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.');
+        setActiveTemplateName('');
         setTemplate(Object.values(VISUAL_TEMPLATES)[0]);
         setIsFormPopulated(false);
     };
     
-    const loadContentTemplate = (templateData: any) => {
+    const loadContentTemplate = (templateEntry: any) => {
+        const templateData = templateEntry?.data ?? templateEntry;
+        const name = templateEntry?.name ?? templateData?.name ?? '';
         setCompanyName(templateData.companyName);
         setCompanyAddress(templateData.companyAddress);
         setCompanyEmail(templateData.companyEmail);
@@ -144,22 +354,47 @@ export default function App() {
         setClientName(templateData.clientName);
         setClientCompany(templateData.clientCompany);
         setClientAddress(templateData.clientAddress);
+        setClientPhone(templateData.clientPhone || '');
+        setClientGstin(templateData.clientGstin || '');
+        setClientPan(templateData.clientPan || '');
+        setClientState(templateData.clientState || '');
+        setClientContactPerson(templateData.clientContactPerson || '');
         setProjectSubject(templateData.projectSubject);
         setDate(templateData.date);
         setQuotationNumber(templateData.quotationNumber);
         setInvoiceTitle(templateData.invoiceTitle);
-        setItems(templateData.items.map((item: any) => ({...item}))); // Deep copy
+        setItems((templateData.items || []).map((item: any) => ({...item}))); // Deep copy
         setNotes(templateData.notes);
         setTemplate(templateData.template);
+        setActiveTemplateName(name);
         setLogoSrc(templateData.logoSrc);
+        setGstType(templateData.gstType || 'CGST/SGST');
+        setGlobalTaxRate(templateData.globalTaxRate || 18);
         setIsFormPopulated(true);
-        showNotification(`${templateData.name} loaded!`, 'success');
+        showNotification(`${name || 'Template'} loaded!`, 'success');
     };
 
     // Removed loadInvoice - no database
     
     // --- Data for the preview component ---
-    const previewData = { companyName, companyAddress, companyEmail, companyPhone, clientName, clientCompany, clientAddress, projectSubject, date, quotationNumber, items, notes, template, invoiceTitle, logoSrc };
+    const previewData = { 
+        companyName, companyAddress, companyEmail, companyPhone, clientName, clientCompany, clientAddress, projectSubject, date, quotationNumber, items, notes, template, invoiceTitle, logoSrc, 
+        // PO fields
+        deliveryAddress, deliveryDate, requisitioner, shipVia, fob, shippingCost,
+        activeTemplateName,
+        // tax ids & client contact
+        companyGstin, companyPan, clientGstin, clientPan, clientState, clientContactPerson, clientPhone,
+        // company bank
+        companyBankName, companyAccountNo, companyBankBranch,
+        // consignee (ship-to)
+        consigneeName, consigneeAddress, consigneeGstin, consigneeState, consigneeContactPerson, consigneeContact,
+        // dispatch/delivery
+        deliveryNote, buyersOrderNo, dispatchDocNo, dispatchedThrough, destination, termsOfDelivery,
+        // totals/footer
+        roundOff, declaration,
+        gstType,
+        globalTaxRate
+    };
 
     // --- Main Logic Handlers --- (no database writes)
     
@@ -189,14 +424,21 @@ export default function App() {
                             <h2 className="text-2xl font-semibold mb-3">Invoice Templates</h2>
                             <div className="flex flex-col sm:flex-row gap-2">
                                 {PRESET_DATA_TEMPLATES.map(ct => (
-                                    <button key={ct.name} onClick={() => loadContentTemplate(ct.data)} className="flex-1 p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-sm">{ct.name}</button>
+                                    <button key={ct.name} onClick={() => loadContentTemplate(ct)} className="flex-1 p-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition text-sm">{ct.name}</button>
                                 ))}
                             </div>
                         </div>
                         {isFormPopulated ? (
                             <>
                                 <div className="flex justify-between items-center mb-6 border-b pb-3"><h2 className="text-2xl font-semibold">Edit Details</h2><button onClick={resetForm} className="text-sm text-red-600 hover:underline">Clear Form</button></div>
-                                
+
+                                {/* Invoice-only: e-Invoice Details */}
+                                {activeTemplateName === 'Invoice' && (
+                                    <div className="space-y-4 mb-6">
+                                        <h3 className="font-semibold text-lg border-b pb-2">e-Invoice Details</h3>
+                                    </div>
+                                )}
+
                                 <div className="space-y-4 mb-6">
                                     <h3 className="font-semibold text-lg border-b pb-2">Your Company Details</h3>
                                     <div className="flex items-center space-x-4">
@@ -207,14 +449,145 @@ export default function App() {
                                     <textarea placeholder="Company Address" value={companyAddress} onChange={e => setCompanyAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
                                     <input type="email" placeholder="Company Email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} className="w-full p-2 border rounded-md" />
                                     <input type="tel" placeholder="Company Phone" value={companyPhone} onChange={e => setCompanyPhone(e.target.value)} className="w-full p-2 border rounded-md" />
+                                    {(activeTemplateName === 'Quotation') && (
+                                        <div className="flex space-x-2 mt-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Company GSTIN" 
+                                                value={companyGstin} 
+                                                onChange={e => setCompanyGstin(e.target.value)} 
+                                                className="w-1/2 p-2 border rounded-md" 
+                                            />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Company PAN" 
+                                                value={companyPan} 
+                                                onChange={e => setCompanyPan(e.target.value)} 
+                                                className="w-1/2 p-2 border rounded-md" 
+                                            />
+                                        </div>
+                                    )}
+                                    {(activeTemplateName === 'Invoice') && (
+                                        <div className="flex space-x-2 mt-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Company GSTIN" 
+                                                value={companyGstin} 
+                                                onChange={e => setCompanyGstin(e.target.value)} 
+                                                className="w-full p-2 border rounded-md" 
+                                            />
+                                        </div>
+                                    )}
+
+                                    {/* Invoice-only: Bank Details & Declaration */}
+                                    {activeTemplateName === 'Invoice' && (
+                                        <>
+                                            <h4 className="font-semibold text-md pt-2">Bank Details</h4>
+                                            <input type="text" placeholder="Bank Name" value={companyBankName} onChange={e => setCompanyBankName(e.target.value)} className="w-full p-2 border rounded-md" />
+                                            <div className="flex space-x-2">
+                                                <input type="text" placeholder="Account No." value={companyAccountNo} onChange={e => setCompanyAccountNo(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                                <input type="text" placeholder="Branch & IFS Code" value={companyBankBranch} onChange={e => setCompanyBankBranch(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                            </div>
+
+                                            <textarea placeholder="Declaration" value={declaration} onChange={e => setDeclaration(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+                                        </>
+                                    )}
                                 </div>
 
                                 <div className="space-y-4 mb-6">
-                                    <h3 className="font-semibold text-lg border-b pb-2">Client Details</h3>
-                                    <input type="text" placeholder="Client Name" value={clientName} onChange={e => setClientName(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <input type="text" placeholder="Client Company (Optional)" value={clientCompany} onChange={e => setClientCompany(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <textarea placeholder="Client Address" value={clientAddress} onChange={e => setClientAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                    <h3 className="font-semibold text-lg border-b pb-2">{activeTemplateName === 'Purchase Order' ? 'Vendor / Supplier Details' : activeTemplateName === 'Quotation' ? 'Billed To' : activeTemplateName === 'Invoice' ? 'Buyer (Bill-to) Details' : 'Client Details'}</h3>
+                                    <input type="text" placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Name' : 'Client Name'} value={clientName} onChange={e => setClientName(e.target.value)} className="w-full p-2 border rounded-md" />
+                                    {/* Hide Client Company for Invoice */}
+                                    {activeTemplateName !== 'Invoice' && (
+                                        <input 
+                                            type="text" 
+                                            placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Company (Optional)' : 'Client Company (Optional)'} 
+                                            value={clientCompany} 
+                                            onChange={e => setClientCompany(e.target.value)} 
+                                            className="w-full p-2 border rounded-md" 
+                                        />
+                                    )}
+                                    <textarea placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Address' : 'Client Address'} value={clientAddress} onChange={e => setClientAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                    {/* Show extra Buyer fields ONLY for Invoice */}
+                                    {activeTemplateName === 'Invoice' && (
+                                        <>
+                                            <input 
+                                                type="text" 
+                                                placeholder="Client GSTIN/UIN" 
+                                                value={clientGstin} 
+                                                onChange={e => setClientGstin(e.target.value)} 
+                                                className="w-full p-2 border rounded-md" 
+                                            />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Client State (e.g., Telangana, Code: 36)" 
+                                                value={clientState} 
+                                                onChange={e => setClientState(e.target.value)} 
+                                                className="w-full p-2 border rounded-md" 
+                                            />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Client Contact Person" 
+                                                value={clientContactPerson} 
+                                                onChange={e => setClientContactPerson(e.target.value)} 
+                                                className="w-1/2 p-2 border rounded-md" 
+                                            />
+                                        </>
+                                    )}
+                                    <input 
+                                        type="tel" 
+                                        placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Phone' : 'Client Phone'} 
+                                        value={clientPhone} 
+                                        onChange={e => setClientPhone(e.target.value)} 
+                                        className="w-1/2 p-2 border rounded-md" 
+                                    />
+                                    {activeTemplateName === 'Quotation' && (
+                                        <div className="flex space-x-2 mt-2">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Client GSTIN" 
+                                                value={clientGstin} 
+                                                onChange={e => setClientGstin(e.target.value)} 
+                                                className="w-1/2 p-2 border rounded-md" 
+                                            />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Client PAN" 
+                                                value={clientPan} 
+                                                onChange={e => setClientPan(e.target.value)} 
+                                                className="w-1/2 p-2 border rounded-md" 
+                                            />
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Invoice-only: Consignee (Ship-to) Details */}
+                                {activeTemplateName === 'Invoice' && (
+                                    <div className="space-y-4 mb-6">
+                                        <h3 className="font-semibold text-lg border-b pb-2">Consignee (Ship-to) Details</h3>
+                                        <input type="text" placeholder="Consignee Name" value={consigneeName} onChange={e => setConsigneeName(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <textarea placeholder="Consignee Address" value={consigneeAddress} onChange={e => setConsigneeAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                        <input type="text" placeholder="Consignee GSTIN/UIN" value={consigneeGstin} onChange={e => setConsigneeGstin(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Consignee State (e.g., Telangana, Code: 36)" value={consigneeState} onChange={e => setConsigneeState(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <div className="flex space-x-2">
+                                            <input type="text" placeholder="Contact Person" value={consigneeContactPerson} onChange={e => setConsigneeContactPerson(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder="Contact Phone" value={consigneeContact} onChange={e => setConsigneeContact(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTemplateName === 'Purchase Order' && (
+                                    <div className="space-y-4 mb-6">
+                                        <h3 className="font-semibold text-lg border-b pb-2">Ship-To Details</h3>
+                                        <textarea 
+                                            placeholder="Shipping Address (if different from Vendor)" 
+                                            value={deliveryAddress} 
+                                            onChange={e => setDeliveryAddress(e.target.value)} 
+                                            className="w-full p-2 border rounded-md" 
+                                            rows={2}
+                                        ></textarea>
+                                    </div>
+                                )}
                                 
                                 <div className="space-y-4 mb-6">
                                     <h3 className="font-semibold text-lg border-b pb-2">Document Details</h3>
@@ -222,26 +595,105 @@ export default function App() {
                                     <input type="text" placeholder="Project Subject" value={projectSubject} onChange={e => setProjectSubject(e.target.value)} className="w-full p-2 border rounded-md" />
                                     <div className="flex space-x-2">
                                        <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                       <input type="text" placeholder="Quote #" value={quotationNumber} onChange={e => setQuotationNumber(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                       <input type="text" placeholder={
+                                            activeTemplateName === 'Purchase Order' ? 'P.O. Number' :
+                                            activeTemplateName === 'Quotation' ? 'Quotation #' :
+                                            activeTemplateName === 'Invoice' ? 'Invoice No.' : 'Quote #'
+                                        } value={quotationNumber} onChange={e => setQuotationNumber(e.target.value)} className="w-1/2 p-2 border rounded-md" />
                                     </div>
                                 </div>
 
+                                {/* Tax Settings are now always visible */}
+                                <div className="space-y-4 mb-6">
+                                    <h3 className="font-semibold text-lg border-b pb-2">Tax Settings</h3>
+                                    <div className="flex space-x-2">
+                                        <div className="w-1/2">
+                                            <label className="block text-sm font-medium text-gray-700">GST Type</label>
+                                            <select 
+                                                value={gstType} 
+                                                onChange={e => setGstType(e.target.value)} 
+                                                className="w-full p-3 border rounded-md bg-white"
+                                            >
+                                                <option value="CGST/SGST">CGST / SGST</option>
+                                                <option value="IGST">IGST</option>
+                                            </select>
+                                        </div>
+                                        <div className="w-1/2">
+                                            <label className="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
+                                            <input 
+                                                type="number" 
+                                                value={globalTaxRate} 
+                                                onChange={e => setGlobalTaxRate(parseFloat(e.target.value) || 0)} 
+                                                className="w-full p-3 border rounded-md" 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {activeTemplateName === 'Purchase Order' && (
+                                    <div className="space-y-4 mb-6">
+                                        <h3 className="font-semibold text-lg border-b pb-2">Shipping & PO Details</h3>
+                                        <div className="flex space-x-2">
+                                            <input type="text" placeholder="Requisitioner" value={requisitioner} onChange={e => setRequisitioner(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <input type="text" placeholder="Ship Via (e.g., FedEx)" value={shipVia} onChange={e => setShipVia(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder="F.O.B." value={fob} onChange={e => setFob(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Shipping Cost</label>
+                                            <input 
+                                                type="number" 
+                                                placeholder="Shipping Cost" 
+                                                value={shippingCost} 
+                                                onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} 
+                                                className="w-full p-2 border rounded-md" 
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Invoice-only: Dispatch & Delivery Details */}
+                                {activeTemplateName === 'Invoice' && (
+                                    <div className="space-y-4 mb-6">
+                                        <h3 className="font-semibold text-lg border-b pb-2">Dispatch & Delivery Details</h3>
+                                        <input type="text" placeholder="Delivery Note" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Buyer's Order No." value={buyersOrderNo} onChange={e => setBuyersOrderNo(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Dispatch Doc No." value={dispatchDocNo} onChange={e => setDispatchDocNo(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Dispatched Through" value={dispatchedThrough} onChange={e => setDispatchedThrough(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Destination" value={destination} onChange={e => setDestination(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder="Terms of Delivery" value={termsOfDelivery} onChange={e => setTermsOfDelivery(e.target.value)} className="w-full p-2 border rounded-md" />
+                                    </div>
+                                )}
+
                                 <div className="mb-6">
-                                    <h3 className="font-semibold mb-2">Services / Items</h3>
-                                    {items.map((item, index) => (
-                                        <InvoiceItem 
-                                            key={index} 
-                                            item={item} 
-                                            index={index} 
-                                            updateItem={updateItem} 
-                                            removeItem={removeItem} 
-                                        />
+                                <h3 className="font-semibold mb-2">Services / Items</h3>
+                                {items.map((item, index) => (
+                                    <InvoiceItem 
+                                        key={index} 
+                                        item={item} 
+                                        index={index} 
+                                        updateItem={updateItem} 
+                                        removeItem={removeItem} 
+                                        activeTemplateName={activeTemplateName}
+                                    />
                                     ))}
                                     <button onClick={addItem} className="w-full mt-2 p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">+ Add Item</button>
                                 </div>
                                 
                                 <div className="space-y-4 mb-6">
                                     <textarea placeholder="Notes / Terms & Conditions" value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+
+                                    {activeTemplateName === 'Invoice' && (
+                                        <div className="space-y-4 mb-2">
+                                            <textarea placeholder="Declaration" value={declaration} onChange={e => setDeclaration(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">Round Off</label>
+                                                <input type="number" step="0.01" placeholder="0.00" value={roundOff} onChange={e => setRoundOff(parseFloat(e.target.value) || 0)} className="w-full p-2 border rounded-md" />
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <label className="block text-sm font-medium text-gray-700">Visual Style</label>
                                     <select value={template} onChange={e => setTemplate(e.target.value)} className="w-full p-3 border rounded-md bg-white">
                                         {Object.values(VISUAL_TEMPLATES).map(t => <option key={t} value={t}>{t}</option>)}

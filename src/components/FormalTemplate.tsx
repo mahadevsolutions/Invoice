@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const FormalTemplate = ({ data, subtotal, tax, total }: { data: any, subtotal: number, tax: number, total: number }) => (
+export const FormalTemplate = ({ data, subtotal, totalCgst, totalSgst, totalIgst, total }: { data: any, subtotal: number, totalCgst: number, totalSgst: number, totalIgst: number, total: number }) => (
     <div className="font-serif text-gray-900">
          <header className="text-center mb-8">
             <h1 className="text-3xl font-bold">{data.invoiceTitle || 'Price Quotation'}</h1>
@@ -46,8 +46,15 @@ export const FormalTemplate = ({ data, subtotal, tax, total }: { data: any, subt
             <div className="w-1/2">
                 <table className="w-full">
                     <tbody>
-                        <tr><td className="p-2">Subtotal</td><td className="text-right p-2">₹{subtotal.toLocaleString('en-IN')}</td></tr>
-                        <tr><td className="p-2">GST (18%)</td><td className="text-right p-2">₹{tax.toLocaleString('en-IN')}</td></tr>
+                                <tr><td className="p-2">Subtotal</td><td className="text-right p-2">₹{subtotal.toLocaleString('en-IN')}</td></tr>
+                                {data.gstType === 'IGST' ? (
+                                    <tr><td className="p-2">IGST</td><td className="text-right p-2">₹{totalIgst.toLocaleString('en-IN')}</td></tr>
+                                ) : (
+                                    <>
+                                        <tr><td className="p-2">CGST</td><td className="text-right p-2">₹{totalCgst.toLocaleString('en-IN')}</td></tr>
+                                        <tr><td className="p-2">SGST</td><td className="text-right p-2">₹{totalSgst.toLocaleString('en-IN')}</td></tr>
+                                    </>
+                                )}
                         <tr className="font-bold text-lg bg-gray-100"><td className="p-3">Total</td><td className="text-right p-3">₹{total.toLocaleString('en-IN')}</td></tr>
                     </tbody>
                 </table>

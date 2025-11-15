@@ -1,8 +1,6 @@
 import React from 'react';
 
-export const AgreementTemplate = ({ data, total }: { data: any, total: number }) => {
-    const subtotal = data.items.reduce((acc: number, item: any) => acc + (item.cost || 0) * (item.quantity || 1), 0);
-    const tax = subtotal * 0.18;
+export const AgreementTemplate = ({ data, subtotal, totalCgst, totalSgst, totalIgst, total }: { data: any, subtotal: number, totalCgst: number, totalSgst: number, totalIgst: number, total: number }) => {
     
     return (
      <div className="font-serif text-sm leading-relaxed">
@@ -26,15 +24,28 @@ export const AgreementTemplate = ({ data, total }: { data: any, total: number })
             ))}
         </ul>
         <h2 className="font-bold text-lg mt-6 mb-3">2. Payment and Costs</h2>
-        <div className="bg-gray-50 p-4 rounded-lg mb-3">
+            <div className="bg-gray-50 p-4 rounded-lg mb-3">
             <div className="flex justify-between items-center mb-2">
                 <span className="font-semibold">Subtotal:</span>
                 <span className="font-semibold">₹{subtotal.toLocaleString('en-IN')} INR</span>
             </div>
-            <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold">GST (18%):</span>
-                <span className="font-semibold">₹{tax.toLocaleString('en-IN')} INR</span>
-            </div>
+            {data.gstType === 'IGST' ? (
+                <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">IGST:</span>
+                    <span className="font-semibold">₹{totalIgst.toLocaleString('en-IN')} INR</span>
+                </div>
+            ) : (
+                <>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">CGST:</span>
+                        <span className="font-semibold">₹{totalCgst.toLocaleString('en-IN')} INR</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">SGST:</span>
+                        <span className="font-semibold">₹{totalSgst.toLocaleString('en-IN')} INR</span>
+                    </div>
+                </>
+            )}
             <div className="flex justify-between items-center pt-2 border-t border-gray-300">
                 <span className="font-bold text-base">Total Cost:</span>
                 <span className="font-bold text-base">₹{total.toLocaleString('en-IN')} INR</span>

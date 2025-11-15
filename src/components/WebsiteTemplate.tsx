@@ -3,11 +3,13 @@ import React from 'react';
 interface WebsiteTemplateProps {
 	data: any;
 	subtotal: number;
-	tax: number;
+	totalCgst: number;
+	totalSgst: number;
+	totalIgst: number;
 	total: number;
 }
 
-const WebsiteTemplate: React.FC<WebsiteTemplateProps> = ({ data, subtotal, tax, total }) => {
+const WebsiteTemplate: React.FC<WebsiteTemplateProps> = ({ data, subtotal, totalCgst, totalSgst, totalIgst, total }) => {
 	return (
 		<div className="font-sans text-sm text-gray-800">
 			<div className="text-center p-2 bg-blue-100 border-b">
@@ -70,10 +72,23 @@ const WebsiteTemplate: React.FC<WebsiteTemplateProps> = ({ data, subtotal, tax, 
 								<td className="p-2">Subtotal</td>
 								<td className="text-right p-2">₹{subtotal.toLocaleString('en-IN')}</td>
 							</tr>
-							<tr>
-								<td className="p-2">GST (18%)</td>
-								<td className="text-right p-2">₹{tax.toLocaleString('en-IN')}</td>
-							</tr>
+							{data.gstType === 'IGST' ? (
+								<tr>
+									<td className="p-2">IGST</td>
+									<td className="text-right p-2">₹{totalIgst.toLocaleString('en-IN')}</td>
+								</tr>
+							) : (
+								<>
+									<tr>
+										<td className="p-2">CGST</td>
+										<td className="text-right p-2">₹{totalCgst.toLocaleString('en-IN')}</td>
+									</tr>
+									<tr>
+										<td className="p-2">SGST</td>
+										<td className="text-right p-2">₹{totalSgst.toLocaleString('en-IN')}</td>
+									</tr>
+								</>
+							)}
 							<tr className="font-bold text-lg bg-blue-100">
 								<td className="p-2">Total</td>
 								<td className="text-right p-2">₹{total.toLocaleString('en-IN')}</td>

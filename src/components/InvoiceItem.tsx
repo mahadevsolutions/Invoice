@@ -5,6 +5,9 @@ interface Item {
     description: string;
     cost: number;
     quantity: number;
+    itemNumber: string;
+    unit: string;
+    hsn: string;
 }
 
 interface InvoiceItemProps {
@@ -12,9 +15,10 @@ interface InvoiceItemProps {
     index: number;
     updateItem: (index: number, field: keyof Item, value: any) => void;
     removeItem: (index: number) => void;
+    activeTemplateName?: string;
 }
 
-const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, removeItem }) => {
+const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, removeItem, activeTemplateName }) => {
     return (
         <div className="flex items-start space-x-2 mb-3 p-2 bg-gray-50 rounded-lg">
             <div className="flex-grow">
@@ -48,6 +52,36 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                     onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value, 10))}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                 />
+                {/* Conditionally hide Item # only for Quotation template */}
+                {activeTemplateName !== 'Quotation' && (
+                    <input
+                        type="text"
+                        placeholder="Item #"
+                        value={item.itemNumber}
+                        onChange={(e) => updateItem(index, 'itemNumber', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                )}
+                {/* Only show 'Unit' field if NOT on the Quotation template */}
+                {activeTemplateName !== 'Quotation' && (
+                    <input
+                        type="text"
+                        placeholder="Unit (e.g., PCS)"
+                        value={item.unit}
+                        onChange={(e) => updateItem(index, 'unit', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                )}
+                {/* Only show HSN if it is NOT a Purchase Order */}
+                {activeTemplateName !== 'Purchase Order' && (
+                    <input
+                        type="text"
+                        placeholder="HSN/SAC"
+                        value={item.hsn}
+                        onChange={(e) => updateItem(index, 'hsn', e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                )}
             </div>
             <button onClick={() => removeItem(index)} className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition self-center">
                 &times;
