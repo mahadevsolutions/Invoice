@@ -1,292 +1,446 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  computeItemsWithTaxes as computeItemsWithTaxesUtil,
+  GstType,
+} from 'src/components/ItemsTable';
+import AuthorizedBy from 'src/components/AuthorizedBy';
+import TemplatePreviewWrapper from 'src/components/template-editor/TemplatePreviewWrapper';
+import {
+  TemplateConfig,
+  ColumnConfig,
+  createProfessionalQuotationDefaultConfig,
+  getFieldLabel,
+  getSectionLabel,
+  getVisibleColumns,
+  isFieldVisible,
+  isSectionVisible,
+  getColumnValue,
+  resolveTemplateConfig,
+} from 'src/components/template-editor/field-types';
 
-// This template IGNORES the subtotal/tax/total props and calculates
-// everything locally to support per-item GST.
-interface QuotationProps {
-  data: any;
+export function computeItemsWithTaxes(data: any) {
+  const items = data?.items || [];
+  const rawGstType = data?.gstType;
+  const gstType: GstType = rawGstType === 'IGST'
+    ? 'IGST'
+    : rawGstType === 'NONE'
+    ? 'NONE'
+    : rawGstType
+    ? 'CGST_SGST'
+    : 'NONE';
+
+  const result = computeItemsWithTaxesUtil(items, gstType, data?.globalTaxRate || 0);
+
+  return {
+    gstType,
+    ...result,
+  };
 }
 
-export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({ data }) => {
-  // Calculate totals locally
-  let totalAmount = 0;
-  let totalCgst = 0;
-  let totalSgst = 0;
-  let totalIgst = 0;
+const numberToWords = (num: number): string => {
+  const a = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 
-  const itemsWithCalculations = (data.items || []).map((item: any) => {
-    const amount = (item.cost || 0) * (item.quantity || 1);
-	const gstRate = data.globalTaxRate || 0;
-    let cgst = 0, sgst = 0, igst = 0;
-
-    if (data?.gstType === 'IGST') {
-      igst = amount * (gstRate / 100);
-    } else {
-      cgst = amount * (gstRate / 2 / 100);
-      sgst = amount * (gstRate / 2 / 100);
-    }
-
-    const itemTotal = amount + cgst + sgst + igst;
-
-    totalAmount += amount;
-    totalCgst += cgst;
-    totalSgst += sgst;
-    totalIgst += igst;
-
-    return { ...item, amount, cgst, sgst, igst, itemTotal };
-  });
-
-  const grandTotal = totalAmount + totalCgst + totalSgst + totalIgst;
-  // New logic to aggregate by HSN
-  const hsnSummary = itemsWithCalculations.reduce((acc: any, item: any) => {
-    const hsn = item.hsn || 'N/A';
-    if (!acc[hsn]) {
-      acc[hsn] = {
-        taxableValue: 0,
-        cgst: 0,
-        sgst: 0,
-        igst: 0,
-        // Get the correct rate label (full or half) based on global settings
-        rate: data.gstType === 'IGST' ? (data.globalTaxRate || 0) : ((data.globalTaxRate || 0) / 2),
-      };
-    }
-    acc[hsn].taxableValue += item.amount;
-    acc[hsn].cgst += item.cgst || 0;
-    acc[hsn].sgst += item.sgst || 0;
-    acc[hsn].igst += item.igst || 0;
-    return acc;
-  }, {} as Record<string, { taxableValue: number; cgst: number; sgst: number; igst: number; rate: number }>);
-
-  // Helper function to convert number to words (for "Total Tax In Words")
-  const numberToWords = (num: number): string => {
-    const a = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
-    const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
-
-    const inWords = (n: number): string => {
-      if (n < 20) return a[n];
-      if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
-      if (n < 1000) return a[Math.floor(n / 1000)] + ' hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
-      if (n < 100000) return inWords(Math.floor(n / 1000)) + ' thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
-      if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
-      return 'number too large';
-    };
-
-    const numStr = Math.floor(num).toString();
-    if (numStr.length > 7) return 'number too large'; // Limit to lakhs
-    const word = inWords(Math.floor(num));
-    return word.toUpperCase() + ' RUPEES ONLY';
+  const inWords = (n: number): string => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
+    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
+    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+    return 'number too large';
   };
 
-  const totalTaxInWords = numberToWords(totalCgst + totalSgst + totalIgst);
-  const logoSrc = data.logoSrc || "https://placehold.co/150x50/000000/FFFFFF?text=MAHADEV";
+  const numStr = Math.floor(num).toString();
+  if (numStr.length > 7) return 'number too large';
+  const word = inWords(Math.floor(num));
+  return word.toUpperCase() + ' RUPEES ONLY';
+};
+
+interface QuotationProps {
+  data: any;
+  templateConfig?: TemplateConfig;
+  currencySymbol?: string;
+}
+
+const toNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+};
+
+export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
+  data,
+  templateConfig,
+  currencySymbol,
+}) => {
+  const invoiceData = data || {};
+  const resolvedConfig = useMemo(
+    () => resolveTemplateConfig(createProfessionalQuotationDefaultConfig, templateConfig),
+    [templateConfig],
+  );
+
+  const currency = currencySymbol || invoiceData.currencySymbol || '₹';
+  const logoSrc = invoiceData.logoSrc || 'https://placehold.co/150x50/000000/FFFFFF?text=MAHADEV';
+  const { gstType, itemsWithCalculations, totals } = computeItemsWithTaxes(invoiceData);
+  const { subtotal, totalCgst, totalSgst, totalIgst, grandTotal } = totals;
+  const totalTax = totalCgst + totalSgst + totalIgst;
+  const totalTaxInWords = numberToWords(totalTax);
+
+  const tableColumns = useMemo(
+    () =>
+      getVisibleColumns(resolvedConfig)
+        .filter((column) => column.key !== 'hsn')
+        .filter((column) => {
+          if (column.key === 'igst' && gstType !== 'IGST') return false;
+          if ((column.key === 'cgst' || column.key === 'sgst') && gstType !== 'CGST_SGST') return false;
+          return column.visible !== false;
+        }),
+    [resolvedConfig, gstType],
+  );
+
+  const getColumnAlignment = (column: ColumnConfig): 'text-left' | 'text-right' | 'text-center' => {
+    if (column.key === 'serialNumber') {
+      return 'text-center';
+    }
+    if (column.formatter === 'currency' || column.formatter === 'number' || column.key === 'gstRate') {
+      return 'text-right';
+    }
+    return 'text-left';
+  };
+
+  const formatCurrency = (value: unknown): string => {
+    const numeric = toNumber(value) ?? 0;
+    return `${currency}${numeric.toLocaleString('en-IN')}`;
+  };
+
+  const formatNumber = (value: unknown): string => {
+    const numeric = toNumber(value);
+    if (typeof numeric === 'number') {
+      return numeric.toLocaleString('en-IN');
+    }
+    return String(value ?? '');
+  };
+
+  const renderCell = (
+    item: any,
+    columnKey: string,
+    formatter: ColumnConfig['formatter'],
+  ): React.ReactNode => {
+    const rawValue = getColumnValue(item, columnKey, invoiceData);
+
+    if (columnKey === 'service' || columnKey === 'description') {
+      const title = rawValue || item.service || item.description || '';
+      const description = item.description && item.description !== title ? item.description : '';
+      const productCode = item.itemNumber || item.productCode || item.hsn;
+
+      return (
+        <div className="space-y-1">
+          <span className="block font-semibold text-gray-800">{String(title || '')}</span>
+          {description ? (
+            <span className="block text-[11px] text-gray-600">{description}</span>
+          ) : null}
+          {productCode ? (
+            <span className="block text-[11px] font-medium text-gray-700">Product Code: {productCode}</span>
+          ) : null}
+        </div>
+      );
+    }
+
+    if (columnKey === 'hsn') {
+      return rawValue ? String(rawValue) : '';
+    }
+
+    if (columnKey === 'gstRate') {
+      const numeric = toNumber(rawValue) ?? 0;
+      return `${numeric.toLocaleString('en-IN')}%`;
+    }
+
+    if (formatter === 'currency') {
+      return formatCurrency(rawValue);
+    }
+
+    if (formatter === 'number') {
+      return formatNumber(rawValue);
+    }
+
+    return rawValue == null ? '' : String(rawValue);
+  };
+
+  const headerVisible = isSectionVisible(resolvedConfig, 'header');
+  const headerTitleVisible = isFieldVisible(resolvedConfig, 'header', 'title');
+  const headerNumberVisible = isFieldVisible(resolvedConfig, 'header', 'quotationNumberLabel');
+  const headerDateVisible = isFieldVisible(resolvedConfig, 'header', 'quotationDateLabel');
+  const quotationFromVisible = isSectionVisible(resolvedConfig, 'quotationFrom');
+  const quotationForVisible = isSectionVisible(resolvedConfig, 'quotationFor');
+  const itemsSummaryVisible = isSectionVisible(resolvedConfig, 'itemsSummary');
+  const totalsSectionVisible = isSectionVisible(resolvedConfig, 'totals');
+  const notesSectionVisible = isSectionVisible(resolvedConfig, 'notes') && Boolean(invoiceData.notes);
 
   return (
-    <div className="font-sans text-xs text-gray-800 bg-white p-8">
-      <style>
-        {`
-          @media print {
-            /* Ensure sections try to stay together */
-            section { break-inside: avoid-page; }
-            /* Allow tables to break if they must, but not rows */
-            table { break-inside: auto; }
-            tr { break-inside: avoid-page; }
-            /* Keep the HSN summary and totals together */
-            .print-avoid-break { break-inside: avoid-page; }
-          }
-        `}
-      </style>
-      {/* 1. Header */}
-      <header className="flex justify-between items-start pb-4 mb-4">
-        {/* Left: Title / meta */}
-        <div className="w-1/2">
-          <h1 className="text-3xl font-bold text-blue-700 uppercase">{data.invoiceTitle || 'Quotation'}</h1>
-          <div className="mt-4">
-            <p><strong>Quotation #:</strong> {data.quotationNumber || '---'}</p>
-            <p><strong>Quotation Date:</strong> {data.date}</p>
-          </div>
-        </div>
-        <div className="w-1/2 text-right">
-          <img src={logoSrc} alt="Company Logo" className="h-16 object-contain inline-block" />
-        </div>
-      </header>
-
-      {/* 2. Billed By / Billed To */}
-      <section className="grid grid-cols-2 gap-8 mb-8">
-        <div>
-          <h3 className="font-bold text-sm uppercase border-b border-gray-300 pb-1 mb-2">Billed By</h3>
-          <p className="font-bold text-base">{data.companyName}</p>
-          <p className="whitespace-pre-line">{data.companyAddress}</p>
-          <p><strong>Email:</strong> {data.companyEmail}</p>
-          <p><strong>Phone:</strong> {data.companyPhone}</p>
-          <p><strong>GSTIN:</strong> {data.companyGstin || '---'}</p>
-          <p><strong>PAN:</strong> {data.companyPan || '---'}</p>
-        </div>
-        <div>
-          <h3 className="font-bold text-sm uppercase border-b border-gray-300 pb-1 mb-2">Billed To</h3>
-          <p className="font-bold text-base">{data.clientName}</p>
-          <p>{data.clientCompany}</p>
-          <p className="whitespace-pre-line">{data.clientAddress}</p>
-          <p><strong>Phone:</strong> {data.clientPhone || '---'}</p>
-          <p><strong>GSTIN:</strong> {data.clientGstin || '---'}</p>
-          <p><strong>PAN:</strong> {data.clientPan || '---'}</p>
-        </div>
-      </section>
-
-      {/* 3. Items Table */}
-      <section>
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-left">Item</th>
-              <th className="border p-2 text-right">GST</th>
-              <th className="border p-2 text-right">Qty</th>
-              <th className="border p-2 text-right">Rate</th>
-              <th className="border p-2 text-right">Amount</th>
-              {data?.gstType === 'IGST' ? (
-                <th className="border p-2 text-right">IGST</th>
-              ) : (
-                <>
-                  <th className="border p-2 text-right">CGST</th>
-                  <th className="border p-2 text-right">SGST</th>
-                </>
+    <div className="bg-white p-8 font-sans text-xs text-gray-800">
+      {headerVisible && (
+        <header className="mb-4 flex items-start justify-between pb-4">
+          <div className="w-1/2 space-y-3">
+            {headerTitleVisible && (
+              <h1 className="text-3xl font-bold uppercase text-blue-700">
+                {invoiceData.invoiceTitle || getFieldLabel(resolvedConfig, 'header', 'title', 'Quotation')}
+              </h1>
+            )}
+            <div className="space-y-1">
+              {headerNumberVisible && (
+                <p>
+                  <strong>{getFieldLabel(resolvedConfig, 'header', 'quotationNumberLabel', 'Quotation #')}:</strong>{' '}
+                  {invoiceData.quotationNumber || '---'}
+                </p>
               )}
-              <th className="border p-2 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {itemsWithCalculations.map((item: any, i: number) => (
-              <tr key={i}>
-                <td className="border p-2 align-top">
-                  <p className="font-semibold">{item.service}</p>
-                  <p className="text-gray-600">HSN/SAC: {item.hsn}</p>
-                </td>
-                <td className="border p-2 text-right align-top">{item.gstRate}%</td>
-                <td className="border p-2 text-right align-top">{item.quantity}</td>
-                <td className="border p-2 text-right align-top">₹{(item.cost || 0).toLocaleString('en-IN')}</td>
-                <td className="border p-2 text-right align-top">₹{item.amount.toLocaleString('en-IN')}</td>
-                {data?.gstType === 'IGST' ? (
-                  <td className="border p-2 text-right align-top">₹{(item.igst || 0).toLocaleString('en-IN')}</td>
-                ) : (
-                  <>
-                    <td className="border p-2 text-right align-top">₹{(item.cgst || 0).toLocaleString('en-IN')}</td>
-                    <td className="border p-2 text-right align-top">₹{(item.sgst || 0).toLocaleString('en-IN')}</td>
-                  </>
-                )}
-                <td className="border p-2 text-right align-top">₹{item.itemTotal.toLocaleString('en-IN')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+              {headerDateVisible && (
+                <p>
+                  <strong>{getFieldLabel(resolvedConfig, 'header', 'quotationDateLabel', 'Quotation Date')}:</strong>{' '}
+                  {invoiceData.date || '---'}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="w-1/2 text-right">
+            <img
+              src={logoSrc}
+              alt={invoiceData.companyName ? `${invoiceData.companyName} logo` : 'Company Logo'}
+              className="inline-block h-16 max-h-16 w-auto object-contain"
+              crossOrigin="anonymous"
+            />
+          </div>
+        </header>
+      )}
 
-      {/* 4. Totals */}
-      <section className="flex justify-end mt-4 print-avoid-break">
-        <div className="w-1/2">
-          <table className="w-full">
-            <tbody>
+      {(quotationFromVisible || quotationForVisible) && (
+        <section className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+          {quotationFromVisible && (
+            <div>
+              <h3 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold uppercase">
+                {getSectionLabel(resolvedConfig, 'quotationFrom', 'Quotation From')}
+              </h3>
+              <p className="text-base font-bold text-gray-900">{invoiceData.companyName || '---'}</p>
+              {isFieldVisible(resolvedConfig, 'quotationFrom', 'addressLabel') && invoiceData.companyAddress ? (
+                <p className="mt-1 whitespace-pre-line">
+                  <span className="font-semibold text-gray-700">
+                    {getFieldLabel(resolvedConfig, 'quotationFrom', 'addressLabel', 'Address')}:
+                  </span>
+                  {'\n'}
+                  {invoiceData.companyAddress}
+                </p>
+              ) : null}
+              {isFieldVisible(resolvedConfig, 'quotationFrom', 'emailLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'emailLabel', 'Email')}:</strong>{' '}
+                  {invoiceData.companyEmail || '---'}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFrom', 'phoneLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'phoneLabel', 'Phone')}:</strong>{' '}
+                  {invoiceData.companyPhone || '---'}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFrom', 'gstinLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'gstinLabel', 'GSTIN')}:</strong>{' '}
+                  {invoiceData.companyGstin || '---'}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFrom', 'panLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'panLabel', 'PAN')}:</strong>{' '}
+                  {invoiceData.companyPan || '---'}
+                </p>
+              )}
+            </div>
+          )}
+          {quotationForVisible && (
+            <div>
+              <h3 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold uppercase">
+                {getSectionLabel(resolvedConfig, 'quotationFor', 'Quotation For')}
+              </h3>
+              <p className="text-base font-bold text-gray-900">{invoiceData.clientName || '---'}</p>
+              {invoiceData.clientCompany && isFieldVisible(resolvedConfig, 'quotationFor', 'companyLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFor', 'companyLabel', 'Company')}:</strong>{' '}
+                  {invoiceData.clientCompany}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFor', 'addressLabel') && invoiceData.clientAddress ? (
+                <p className="mt-1 whitespace-pre-line">
+                  <span className="font-semibold text-gray-700">
+                    {getFieldLabel(resolvedConfig, 'quotationFor', 'addressLabel', 'Address')}:
+                  </span>
+                  {'\n'}
+                  {invoiceData.clientAddress}
+                </p>
+              ) : null}
+              {isFieldVisible(resolvedConfig, 'quotationFor', 'phoneLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFor', 'phoneLabel', 'Phone')}:</strong>{' '}
+                  {invoiceData.clientPhone || '---'}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFor', 'gstinLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFor', 'gstinLabel', 'GSTIN')}:</strong>{' '}
+                  {invoiceData.clientGstin || '---'}
+                </p>
+              )}
+              {isFieldVisible(resolvedConfig, 'quotationFor', 'panLabel') && (
+                <p className="mt-1">
+                  <strong>{getFieldLabel(resolvedConfig, 'quotationFor', 'panLabel', 'PAN')}:</strong>{' '}
+                  {invoiceData.clientPan || '---'}
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      <section className="print-avoid-break">
+        <div className="overflow-hidden rounded border border-gray-300">
+          <table className="w-full border-collapse text-left text-xs">
+            <thead className="bg-gray-100 text-[11px] uppercase tracking-wide text-gray-800">
               <tr>
-                <td className="p-2">Amount</td>
-                <td className="p-2 text-right">₹{totalAmount.toLocaleString('en-IN')}</td>
+                {tableColumns.map((column) => (
+                  <th
+                    key={column.key}
+                    className={`border border-gray-300 p-2 font-bold text-gray-900 ${getColumnAlignment(column)}`}
+                    style={column.width ? { width: `${column.width}%` } : undefined}
+                  >
+                    {column.label}
+                  </th>
+                ))}
               </tr>
-              {data?.gstType === 'IGST' ? (
+            </thead>
+            <tbody>
+              {itemsWithCalculations.length === 0 ? (
                 <tr>
-                  <td className="p-2">IGST</td>
-                  <td className="p-2 text-right">₹{totalIgst.toLocaleString('en-IN')}</td>
+                  <td colSpan={tableColumns.length} className="p-4 text-center text-sm text-gray-500">
+                    No items added.
+                  </td>
                 </tr>
               ) : (
-                <>
-                  <tr>
-                    <td className="p-2">CGST</td>
-                    <td className="p-2 text-right">₹{totalCgst.toLocaleString('en-IN')}</td>
+                itemsWithCalculations.map((item: any, rowIndex: number) => (
+                  <tr key={`${item.service}-${rowIndex}`} className="border-t border-gray-200">
+                    {tableColumns.map((column) => {
+                      const content = renderCell(item, column.key, column.formatter || 'text');
+                      const alignment = getColumnAlignment(column);
+                      return (
+                        <td
+                          key={column.key}
+                          className={`align-top p-2 ${alignment} border border-gray-200 ${column.key === 'service' || column.key === 'description' ? 'leading-relaxed' : ''}`}
+                        >
+                          {content}
+                        </td>
+                      );
+                    })}
                   </tr>
-                  <tr>
-                    <td className="p-2">SGST</td>
-                    <td className="p-2 text-right">₹{totalSgst.toLocaleString('en-IN')}</td>
-                  </tr>
-                </>
+                ))
               )}
-              <tr className="font-bold text-base bg-gray-100">
-                <td className="p-3">Total (INR)</td>
-                <td className="p-3 text-right">₹{grandTotal.toLocaleString('en-IN')}</td>
-              </tr>
             </tbody>
           </table>
         </div>
+
+        {itemsSummaryVisible && isFieldVisible(resolvedConfig, 'itemsSummary', 'totalTaxInWordsLabel') && (
+          <div className="border border-t-0 border-gray-300 p-2 text-right font-semibold text-gray-700">
+            {getFieldLabel(resolvedConfig, 'itemsSummary', 'totalTaxInWordsLabel', 'Total Tax In Words')}
+            {': '}
+            {totalTaxInWords}
+          </div>
+        )}
       </section>
 
-      {/* 4.5. NEW HSN SUMMARY TABLE */}
-      <section className="mt-8 print-avoid-break">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th rowSpan={2} className="border p-2 text-left">HSN</th>
-              <th rowSpan={2} className="border p-2 text-right">Taxable Value</th>
-              {data?.gstType === 'IGST' ? (
-                <th colSpan={2} className="border p-2 text-center">IGST</th>
-              ) : (
-                <>
-                  <th colSpan={2} className="border p-2 text-center">CGST</th>
-                  <th colSpan={2} className="border p-2 text-center">SGST</th>
-                </>
-              )}
-              <th rowSpan={2} className="border p-2 text-right">Total</th>
-            </tr>
-            <tr className="bg-gray-100">
-              <th className="border p-2 text-right">Rate</th>
-              <th className="border p-2 text-right">Amount</th>
-              {data?.gstType !== 'IGST' && (
-                <>
-                  <th className="border p-2 text-right">Rate</th>
-                  <th className="border p-2 text-right">Amount</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(hsnSummary).map(([hsn, d]: [string, any]) => (
-              <tr key={hsn}>
-                <td className="border p-2">{hsn}</td>
-                <td className="border p-2 text-right">₹{(d.taxableValue || 0).toLocaleString('en-IN')}</td>
-                <td className="border p-2 text-right">{(d.rate || 0)}%</td>
-                <td className="border p-2 text-right">₹{(d.igst ? d.igst : d.cgst || 0).toLocaleString('en-IN')}</td>
-                {data?.gstType !== 'IGST' && (
+      {totalsSectionVisible && (
+        <section className="mt-4 flex justify-end print-avoid-break">
+          <div className="w-full max-w-md">
+            <table className="w-full text-sm">
+              <tbody>
+                {isFieldVisible(resolvedConfig, 'totals', 'amountLabel') && (
+                  <tr>
+                    <td className="p-2 text-gray-700">
+                      {getFieldLabel(resolvedConfig, 'totals', 'amountLabel', 'Amount')}
+                    </td>
+                    <td className="p-2 text-right font-medium">{formatCurrency(subtotal)}</td>
+                  </tr>
+                )}
+                {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
+                  <tr>
+                    <td className="p-2 text-gray-700">
+                      {getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}
+                    </td>
+                    <td className="p-2 text-right font-medium">{formatCurrency(totalIgst)}</td>
+                  </tr>
+                )}
+                {gstType === 'CGST_SGST' && (
                   <>
-                    <td className="border p-2 text-right">{(d.rate || 0)}%</td>
-                    <td className="border p-2 text-right">₹{(d.sgst || 0).toLocaleString('en-IN')}</td>
+                    {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
+                      <tr>
+                        <td className="p-2 text-gray-700">
+                          {getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}
+                        </td>
+                        <td className="p-2 text-right font-medium">{formatCurrency(totalCgst)}</td>
+                      </tr>
+                    )}
+                    {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
+                      <tr>
+                        <td className="p-2 text-gray-700">
+                          {getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}
+                        </td>
+                        <td className="p-2 text-right font-medium">{formatCurrency(totalSgst)}</td>
+                      </tr>
+                    )}
                   </>
                 )}
-                <td className="border p-2 text-right">₹{(((d.cgst || 0) + (d.sgst || 0) + (d.igst || 0))).toLocaleString('en-IN')}</td>
-              </tr>
-            ))}
-            <tr className="font-bold bg-gray-50">
-              <td className="border p-2">Total</td>
-              <td className="border p-2 text-right">₹{totalAmount.toLocaleString('en-IN')}</td>
-              {data?.gstType === 'IGST' ? (
-                <td colSpan={2} className="border p-2 text-right">₹{totalIgst.toLocaleString('en-IN')}</td>
-              ) : (
-                <>
-                  <td colSpan={2} className="border p-2 text-right">₹{totalCgst.toLocaleString('en-IN')}</td>
-                  <td colSpan={2} className="border p-2 text-right">₹{totalSgst.toLocaleString('en-IN')}</td>
-                </>
-              )}
-              <td className="border p-2 text-right">₹{(totalCgst + totalSgst + totalIgst).toLocaleString('en-IN')}</td>
-            </tr>
-          </tbody>
-        </table>
-        {/* Total Tax in Words */}
-        <div className="text-right font-bold border border-t-0 border-gray-300 p-2">
-          Total Tax In Words: {totalTaxInWords}
-        </div>
-      </section>
+                {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
+                  <tr className="bg-gray-100 text-base font-semibold text-gray-900">
+                    <td className="p-3">
+                      {getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Total (INR)')}
+                    </td>
+                    <td className="p-3 text-right">{formatCurrency(grandTotal)}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
-      {/* 5. Notes / Terms */}
-      {data.notes && (
+      <AuthorizedBy
+        signatureUrl={invoiceData.authorizedSignatureUrl}
+        personName={invoiceData.authorizedPersonName}
+        align="right"
+        label={resolvedConfig.authorizedBy?.label}
+        visible={resolvedConfig.authorizedBy?.visible !== false}
+      />
+
+      {notesSectionVisible && (
         <section className="mt-8 print-avoid-break">
-          <h4 className="font-bold mb-1">Terms & Conditions:</h4>
-          <p className="text-xs text-gray-700 whitespace-pre-line border p-3 rounded-lg">{data.notes}</p>
+          <h4 className="mb-1 text-sm font-bold text-gray-800">
+            {getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Terms & Conditions')}
+          </h4>
+          <p className="whitespace-pre-line rounded-lg border border-gray-200 p-3 text-xs text-gray-700">
+            {invoiceData.notes}
+          </p>
         </section>
       )}
     </div>
   );
 };
+
+export const ProfessionalQuotationTemplatePreview: React.FC = () => (
+  <TemplatePreviewWrapper
+    defaultConfigFactory={createProfessionalQuotationDefaultConfig}
+  />
+);
 
 export default ProfessionalQuotationTemplate;

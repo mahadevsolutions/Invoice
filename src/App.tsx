@@ -5,6 +5,14 @@ import Notification from './components/Notification';
 import InvoiceItem from './components/InvoiceItem';
 import InvoicePreview from './components/InvoicePreview';
 import { loadPdfScripts, generatePdf } from './services/pdfGenerator';
+import TemplatePreviewWrapper from './components/template-editor/TemplatePreviewWrapper';
+import {
+    TemplateConfig,
+    createProfessionalQuotationDefaultConfig,
+    createPurchaseOrderDefaultConfig,
+    createTaxInvoiceDefaultConfig,
+} from './components/template-editor/field-types';
+import { loadConfig, saveConfig } from './utils/templateConfigStorage';
 
 // --- Helper Functions & Constants ---
 // We keep constants that App.tsx *needs* here.
@@ -21,46 +29,14 @@ const getCurrentDate = () => {
 
 export const VISUAL_TEMPLATES = {
     DIGITAL_MARKETING: 'Digital Marketing Style',
-    AGREEMENT: 'Service Agreement Style',
     TAX_INVOICE: 'Tax Invoice Style',
-    MODERN: 'Modern Red Style',
-    WEBSITE_DEVELOPMENT: 'Website Development Style',
     PURCHASE_ORDER: 'Purchase Order Style',
     PROFESSIONAL_QUOTATION: 'Professional Quotation Style',
-    FORMAL: 'Formal Classic Style',
 };
 
-const defaultLogoUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7config+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7S9+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7Good9+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..";
+const defaultLogoUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7config+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7Good9+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..";
 
 // --- Content Template Data ---
-// Renamed agreement template (keeps original data but a clearer constant/name)
-const APP_DEV_AGREEMENT_TEMPLATE = {
-    name: "App Dev Agreement",
-    data: {
-        companyName: 'MAHADEV SOLUTIONS',
-        companyAddress: '',
-        companyEmail: 'mahadevsolution7@gmail.com',
-        companyPhone: '9030602967',
-        clientName: 'Organics (Client)',
-        clientCompany: '',
-        clientAddress: '',
-        projectSubject: 'App Development Agreement',
-        invoiceTitle: 'Invoice',
-        date: getCurrentDate(),
-        quotationNumber: '',
-        items: [
-            { service: 'UI/UX Design', description: "Mahadev Solutions will design the user interface and user experience according to the Client's specifications.", cost: 0, quantity: 1 },
-            { service: 'App Development', description: 'Development of three separate applications: User App, Delivery Partner App, and Admin/Restaurant App.', cost: 0, quantity: 1 },
-            { service: 'Backend Development', description: 'An efficient backend system will be developed to facilitate seamless data communication between the apps.', cost: 0, quantity: 1 },
-            { service: 'Monthly Maintenance', description: 'Post-project monthly maintenance services to ensure the smooth operation of the apps.', cost: 7000, quantity: 1 },
-        ],
-        notes: 'If Mahadev Solutions fails to complete the project or discontinues the work, a full refund of the amount paid by the Client will be provided.',
-        gstType: 'CGST/SGST',
-        template: VISUAL_TEMPLATES.AGREEMENT,
-        logoSrc: defaultLogoUrl
-    }
-};
-
 // New preset templates (placeholders for now)
 const INVOICE_TEMPLATE = {
     name: 'Invoice',
@@ -120,6 +96,8 @@ const INVOICE_TEMPLATE = {
         gstType: 'CGST/SGST',
         template: VISUAL_TEMPLATES.TAX_INVOICE,
         logoSrc: defaultLogoUrl,
+        authorizedSignatureUrl: null,
+        authorizedPersonName: null,
     }
 };
 
@@ -144,6 +122,8 @@ const PURCHASE_ORDER_TEMPLATE = {
         notes: 'All items subject to inspection upon delivery. Payment terms: NET 30.',
         template: VISUAL_TEMPLATES.PURCHASE_ORDER,
         logoSrc: defaultLogoUrl,
+        authorizedSignatureUrl: null,
+        authorizedPersonName: null,
 
         // PO-Specific Fields
         deliveryAddress: 'MAHADEV SOLUTIONS\n123 Tech Road\nVisakhapatnam, AP 530001',
@@ -186,6 +166,8 @@ const QUOTATION_TEMPLATE = {
         notes: '1. Payment: 100% Advance.\n2. Delivery: Within 2 weeks.\n3. Prices are inclusive of all taxes.',
         template: VISUAL_TEMPLATES.PROFESSIONAL_QUOTATION,
         logoSrc: defaultLogoUrl,
+        authorizedSignatureUrl: null,
+        authorizedPersonName: null,
 
         // Clear PO-specific fields
         deliveryAddress: '',
@@ -199,7 +181,32 @@ const QUOTATION_TEMPLATE = {
 };
 
 // Expose all presets (order: Invoice, Purchase Order, Quotation, Agreement)
-const PRESET_DATA_TEMPLATES = [INVOICE_TEMPLATE, PURCHASE_ORDER_TEMPLATE, QUOTATION_TEMPLATE, APP_DEV_AGREEMENT_TEMPLATE];
+const PRESET_DATA_TEMPLATES = [INVOICE_TEMPLATE, PURCHASE_ORDER_TEMPLATE, QUOTATION_TEMPLATE];
+
+interface TemplateEditorDefinition {
+    defaultConfigFactory: () => TemplateConfig;
+    storageKey: string;
+}
+
+const TEMPLATE_EDITOR_MAP: Record<string, TemplateEditorDefinition> = {
+    [VISUAL_TEMPLATES.TAX_INVOICE]: {
+        defaultConfigFactory: createTaxInvoiceDefaultConfig,
+        storageKey: 'template-config-tax-invoice',
+    },
+    [VISUAL_TEMPLATES.PURCHASE_ORDER]: {
+        defaultConfigFactory: createPurchaseOrderDefaultConfig,
+        storageKey: 'template-config-purchase-order',
+    },
+    [VISUAL_TEMPLATES.PROFESSIONAL_QUOTATION]: {
+        defaultConfigFactory: createProfessionalQuotationDefaultConfig,
+        storageKey: 'template-config-professional-quotation',
+    },
+};
+
+const TEMPLATE_ALIASES: Record<string, string> = {
+    // No aliases by default — add mappings like:
+    [VISUAL_TEMPLATES.DIGITAL_MARKETING]: VISUAL_TEMPLATES.TAX_INVOICE,
+};
 
 // The main application component
 export default function App() {
@@ -264,9 +271,13 @@ export default function App() {
     const [activeTemplateName, setActiveTemplateName] = useState(''); // Track selected preset
     const [invoiceTitle, setInvoiceTitle] = useState('');
     const [logoSrc, setLogoSrc] = useState(defaultLogoUrl);
+    const [authorizedSignatureUrl, setAuthorizedSignatureUrl] = useState<string | null>(null);
+    const [authorizedPersonName, setAuthorizedPersonName] = useState('');
     const [items, setItems] = useState<Item[]>([]);
     const [notes, setNotes] = useState('');
     const [template, setTemplate] = useState(VISUAL_TEMPLATES.DIGITAL_MARKETING);
+    const [templateConfigs, setTemplateConfigs] = useState<Record<string, TemplateConfig | undefined>>({});
+    const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
     
     const [isGenerating, setIsGenerating] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
@@ -291,12 +302,36 @@ export default function App() {
         return () => {};
     }, []);
 
+    useEffect(() => {
+        const loaded: Record<string, TemplateConfig | undefined> = {};
+        Object.entries(TEMPLATE_EDITOR_MAP).forEach(([key, entry]) => {
+            const stored = loadConfig(entry.storageKey);
+            if (stored) {
+                loaded[key] = stored;
+            }
+        });
+        if (Object.keys(loaded).length) {
+            setTemplateConfigs(loaded);
+        }
+    }, []);
+
+    useEffect(() => {
+        const resolvedKey = TEMPLATE_EDITOR_MAP[template] ? template : TEMPLATE_ALIASES[template];
+        if (!resolvedKey) {
+            setIsTemplateEditorOpen(false);
+        }
+    }, [template]);
+
     // --- Form Handlers ---
     const addItem = () => setItems([...items, { ...initialItem }]);
     
-    const updateItem = (index: number, field: keyof Item, value: any) => {
+    const updateItem = (index: number, field: keyof Item, value: any, extraFields?: Partial<Item>) => {
         const newItems = [...items];
-        (newItems[index] as any)[field] = value;
+        newItems[index] = {
+            ...newItems[index],
+            [field]: value,
+            ...(extraFields || {}),
+        };
         setItems(newItems);
     };
     
@@ -310,12 +345,22 @@ export default function App() {
             reader.readAsDataURL(file);
         }
     };
+
+    const handleSignatureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setAuthorizedSignatureUrl(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
     
     const resetForm = () => {
         setCompanyName(''); setCompanyAddress(''); setCompanyEmail(''); setCompanyPhone('');
         setClientName(''); setClientCompany(''); setClientAddress('');
         setProjectSubject(''); setDate(getCurrentDate()); setQuotationNumber('');
         setItems([]); setNotes(''); setInvoiceTitle(''); setLogoSrc(defaultLogoUrl);
+        setAuthorizedSignatureUrl(null); setAuthorizedPersonName('');
         // Clear Purchase Order related fields
         setDeliveryAddress(''); setDeliveryDate(getCurrentDate()); setRequisitioner('');
         setShipVia(''); setFob(''); setShippingCost(0);
@@ -368,6 +413,8 @@ export default function App() {
         setTemplate(templateData.template);
         setActiveTemplateName(name);
         setLogoSrc(templateData.logoSrc);
+        setAuthorizedSignatureUrl(templateData.authorizedSignatureUrl || null);
+        setAuthorizedPersonName(templateData.authorizedPersonName || '');
         setGstType(templateData.gstType || 'CGST/SGST');
         setGlobalTaxRate(templateData.globalTaxRate || 18);
         setIsFormPopulated(true);
@@ -377,8 +424,14 @@ export default function App() {
     // Removed loadInvoice - no database
     
     // --- Data for the preview component ---
+    const resolvedTemplateKey = TEMPLATE_EDITOR_MAP[template] ? template : TEMPLATE_ALIASES[template];
+    const activeTemplateConfig = resolvedTemplateKey ? templateConfigs[resolvedTemplateKey] : undefined;
+    const activeTemplateEditor = resolvedTemplateKey ? TEMPLATE_EDITOR_MAP[resolvedTemplateKey] : undefined;
+
     const previewData = { 
-        companyName, companyAddress, companyEmail, companyPhone, clientName, clientCompany, clientAddress, projectSubject, date, quotationNumber, items, notes, template, invoiceTitle, logoSrc, 
+        companyName, companyAddress, companyEmail, companyPhone, clientName, clientCompany, clientAddress, projectSubject, date, quotationNumber, items, notes, template, invoiceTitle, logoSrc,
+        authorizedSignatureUrl,
+        authorizedPersonName: authorizedPersonName.trim() || null,
         // PO fields
         deliveryAddress, deliveryDate, requisitioner, shipVia, fob, shippingCost,
         activeTemplateName,
@@ -393,10 +446,28 @@ export default function App() {
         // totals/footer
         roundOff, declaration,
         gstType,
-        globalTaxRate
+        globalTaxRate,
+        templateConfig: activeTemplateConfig,
     };
 
     // --- Main Logic Handlers --- (no database writes)
+
+    const handleTemplateConfigApply = (templateKey: string, updatedConfig: TemplateConfig) => {
+        let shouldPersist = false;
+        setTemplateConfigs(prev => {
+            const current = prev[templateKey];
+            if (current === updatedConfig) {
+                return prev;
+            }
+            shouldPersist = true;
+            return { ...prev, [templateKey]: updatedConfig };
+        });
+
+        const entry = TEMPLATE_EDITOR_MAP[templateKey];
+        if (shouldPersist && entry) {
+            saveConfig(entry.storageKey, updatedConfig);
+        }
+    };
     
     const handleGeneratePdf = async () => {
         setIsGenerating(true);
@@ -444,6 +515,48 @@ export default function App() {
                                     <div className="flex items-center space-x-4">
                                         <img src={logoSrc} alt="Current Logo" className="h-12 w-12 object-contain border p-1 rounded-md bg-gray-50"/>
                                         <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-3 rounded-lg hover:bg-gray-50">Upload Logo<input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} /></label>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                                            {authorizedSignatureUrl ? (
+                                                <img
+                                                    src={authorizedSignatureUrl}
+                                                    alt="Authorized signature preview"
+                                                    className="h-16 w-auto max-w-[10rem] border p-1 rounded-md bg-gray-50"
+                                                />
+                                            ) : (
+                                                <div className="h-16 w-40 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-xs text-gray-400">
+                                                    Signature Preview
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                                                <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 text-sm font-semibold py-2 px-3 rounded-lg hover:bg-gray-50">
+                                                    Upload Signature
+                                                    <input
+                                                        type="file"
+                                                        accept="image/png,image/jpeg"
+                                                        className="hidden"
+                                                        onChange={handleSignatureChange}
+                                                    />
+                                                </label>
+                                                {authorizedSignatureUrl && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAuthorizedSignatureUrl(null)}
+                                                        className="text-xs text-red-600 hover:underline"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Authorized Person Name"
+                                            value={authorizedPersonName}
+                                            onChange={e => setAuthorizedPersonName(e.target.value)}
+                                            className="w-full p-2 border rounded-md"
+                                        />
                                     </div>
                                     <input type="text" placeholder="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full p-2 border rounded-md" />
                                     <textarea placeholder="Company Address" value={companyAddress} onChange={e => setCompanyAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
@@ -718,6 +831,27 @@ export default function App() {
                                    {isFormPopulated ? <InvoicePreview ref={previewRef} data={previewData} /> : <div className="bg-white p-8 shadow-lg rounded-xl h-96 flex items-center justify-center text-gray-400">Preview will appear here...</div>}
                                 </div>
                             </div>
+                            {activeTemplateEditor && (
+                                <div className="mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsTemplateEditorOpen(prev => !prev)}
+                                        className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50"
+                                    >
+                                        {isTemplateEditorOpen ? 'Close Template Editor' : 'Customize Template'}
+                                    </button>
+                                    {isTemplateEditorOpen && resolvedTemplateKey && (
+                                        <div className="mt-4 rounded-lg border border-gray-200 bg-white shadow-sm">
+                                            <TemplatePreviewWrapper
+                                                defaultConfigFactory={activeTemplateEditor.defaultConfigFactory}
+                                                config={activeTemplateConfig}
+                                                storageKey={activeTemplateEditor.storageKey}
+                                                onConfigApply={(updatedConfig) => handleTemplateConfigApply(resolvedTemplateKey, updatedConfig)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                         {/* Saved Invoices section removed (no database) */}
                     </div>

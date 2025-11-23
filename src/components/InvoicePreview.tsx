@@ -15,10 +15,6 @@ export const VISUAL_TEMPLATES = {
 
 // Import your separated template components
 import { DigitalMarketingTemplate } from './DigitalMarketingTemplate';
-import { FormalTemplate } from './FormalTemplate';
-import { AgreementTemplate } from './AgreementTemplates';
-import { ModernTemplate } from './ModernTemplate';
-import WebsiteTemplate from './WebsiteTemplate';
 import PurchaseOrderTemplate from './PurchaseOrderTemplate';
 import ProfessionalQuotationTemplate from './ProfessionalQuotationTemplate';
 import { TaxInvoiceTemplate } from './TaxInvoiceTemplate';
@@ -49,26 +45,22 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
     const tax = totalCgst + totalSgst + totalIgst;
     // --- END REVISED TAX LOGIC ---
 
+    const templateConfig = data?.templateConfig;
+
     const renderTemplate = () => {
         switch (template) {
             case VISUAL_TEMPLATES.DIGITAL_MARKETING:
                 return <DigitalMarketingTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
-            case VISUAL_TEMPLATES.FORMAL:
-                return <FormalTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
-            case VISUAL_TEMPLATES.PURCHASE_ORDER:
-                    return <PurchaseOrderTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
+                case VISUAL_TEMPLATES.PURCHASE_ORDER:
+                case VISUAL_TEMPLATES.FORMAL:
+                    return <PurchaseOrderTemplate data={data} templateConfig={templateConfig} />;
             case VISUAL_TEMPLATES.TAX_INVOICE:
-                return <TaxInvoiceTemplate data={data} />;
+                return <TaxInvoiceTemplate data={data} templateConfig={templateConfig} />;
             case VISUAL_TEMPLATES.PROFESSIONAL_QUOTATION:
-                return <ProfessionalQuotationTemplate data={data} />;
+                return <ProfessionalQuotationTemplate data={data} templateConfig={templateConfig} />;
             case VISUAL_TEMPLATES.AGREEMENT:
-                return <AgreementTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
-            case VISUAL_TEMPLATES.WEBSITE:
-            case VISUAL_TEMPLATES.WEBSITE_DEVELOPMENT:
-                return <WebsiteTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
-            case VISUAL_TEMPLATES.MODERN:
             default:
-                return <ModernTemplate data={data} subtotal={subtotal} totalCgst={totalCgst} totalSgst={totalSgst} totalIgst={totalIgst} total={total} />;
+                return <></>;
         }
     };
 

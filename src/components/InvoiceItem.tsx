@@ -13,12 +13,15 @@ interface Item {
 interface InvoiceItemProps {
     item: Item;
     index: number;
-    updateItem: (index: number, field: keyof Item, value: any) => void;
+    updateItem: (index: number, field: keyof Item, value: any, extraFields?: Partial<Item>) => void;
     removeItem: (index: number) => void;
     activeTemplateName?: string;
 }
 
 const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, removeItem, activeTemplateName }) => {
+    const isQuotation = activeTemplateName === 'Quotation';
+    const isPurchaseOrder = activeTemplateName === 'Purchase Order';
+
     return (
         <div className="flex items-start space-x-2 mb-3 p-2 bg-gray-50 rounded-lg">
             <div className="flex-grow">
@@ -52,18 +55,8 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                     onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value, 10))}
                     className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                 />
-                {/* Conditionally hide Item # only for Quotation template */}
-                {activeTemplateName !== 'Quotation' && (
-                    <input
-                        type="text"
-                        placeholder="Item #"
-                        value={item.itemNumber}
-                        onChange={(e) => updateItem(index, 'itemNumber', e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                )}
                 {/* Only show 'Unit' field if NOT on the Quotation template */}
-                {activeTemplateName !== 'Quotation' && (
+                {!isQuotation && (
                     <input
                         type="text"
                         placeholder="Unit (e.g., PCS)"
@@ -73,7 +66,18 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                     />
                 )}
                 {/* Only show HSN if it is NOT a Purchase Order */}
-                {activeTemplateName !== 'Purchase Order' && (
+                {isQuotation ? (
+                    <input
+                        type="text"
+                        placeholder="Product Code"
+                        value={item.itemNumber || item.hsn}
+                        onChange={(e) => {
+                            const value = e.target.value;
+                            updateItem(index, 'itemNumber', value, { hsn: value });
+                        }}
+                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
+                    />
+                ) : (!isPurchaseOrder && (
                     <input
                         type="text"
                         placeholder="HSN/SAC"
@@ -81,7 +85,7 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                         onChange={(e) => updateItem(index, 'hsn', e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                     />
-                )}
+                ))}
             </div>
             <button onClick={() => removeItem(index)} className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition self-center">
                 &times;
