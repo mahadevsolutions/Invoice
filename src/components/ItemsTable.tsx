@@ -196,7 +196,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
           </thead>
           <tbody>
             {itemsWithCalculations.map((item, index) => (
-              <tr key={`${item.service}-${index}`}>
+              <tr key={`${item.service}-${index}`} className="border-t border-gray-200 print-avoid-break">
                 <td className="border p-2 align-top text-right font-semibold">{index + 1}</td>
                 <td className="border p-2 align-top">
                   <p className="font-semibold">{item.service}</p>
@@ -238,7 +238,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
             ))}
           </tbody>
           <tfoot>
-            <tr>
+            <tr className="print-avoid-break">
               <td className="border p-2 text-right" colSpan={labelColSpan}>
                 Subtotal
               </td>
@@ -247,7 +247,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
               </td>
             </tr>
             {gstType === 'IGST' && (
-              <tr>
+              <tr className="print-avoid-break">
                 <td className="border p-2 text-right" colSpan={labelColSpan}>
                   IGST
                 </td>
@@ -258,7 +258,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
             )}
             {gstType === 'CGST_SGST' && (
               <>
-                <tr>
+                <tr className="print-avoid-break">
                   <td className="border p-2 text-right" colSpan={labelColSpan}>
                     CGST
                   </td>
@@ -266,7 +266,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                     {formatCurrency(totalCgst, currency)}
                   </td>
                 </tr>
-                <tr>
+                <tr className="print-avoid-break">
                   <td className="border p-2 text-right" colSpan={labelColSpan}>
                     SGST
                   </td>
@@ -276,7 +276,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 </tr>
               </>
             )}
-            <tr className="font-bold text-base bg-gray-100">
+            <tr className="font-bold text-base bg-gray-100 print-avoid-break">
               <td className="border p-2 text-right" colSpan={labelColSpan}>
                 Total
               </td>
@@ -330,7 +330,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
           </thead>
           <tbody>
             {Object.entries(hsnSummary).map(([hsn, data]) => (
-              <tr key={hsn}>
+              <tr key={hsn} className="print-avoid-break">
                 <td className="border p-2">{hsn}</td>
                 <td className="border p-2 text-right">
                   {formatCurrency(data.taxableValue, currency)}
@@ -360,7 +360,7 @@ const ItemsTable: React.FC<ItemsTableProps> = ({
                 </td>
               </tr>
             ))}
-            <tr className="font-bold bg-gray-50">
+            <tr className="font-bold bg-gray-50 print-avoid-break">
               <td className="border p-2">Total</td>
               <td className="border p-2 text-right">
                 {formatCurrency(subtotal, currency)}

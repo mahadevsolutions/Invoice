@@ -92,10 +92,6 @@ export const DigitalMarketingTemplate = ({ data, subtotal, totalCgst, totalSgst,
                     </div>
                 </div>
             </main>
-             <footer className="mt-12 text-center text-sm text-gray-500 border-t pt-4 no-print-footer">
-                <p>{data.companyAddress.split('\n')[0]}, AP </p>
-                <p>{data.companyPhone} | {data.companyEmail}</p>
-            </footer>
         </div>
     );
 };

@@ -14,7 +14,7 @@ interface AuthorizedByProps {
 
 /**
  * Renders an optional authorized signature block with configurable alignment.
- * Suppresses output when neither signature nor name is provided.
+ * Block is wrapped in "print-avoid-break" so it NEVER splits across PDF pages.
  */
 const AuthorizedBy: React.FC<AuthorizedByProps> = ({
   signatureUrl,
@@ -25,13 +25,8 @@ const AuthorizedBy: React.FC<AuthorizedByProps> = ({
   labelClassName,
   visible = true,
 }) => {
-  if (!visible) {
-    return null;
-  }
-
-  if (!signatureUrl && !personName) {
-    return null;
-  }
+  if (!visible) return null;
+  if (!signatureUrl && !personName) return null;
 
   const alignmentClasses: Record<AlignOption, string> = {
     left: 'items-start text-left',
@@ -40,13 +35,15 @@ const AuthorizedBy: React.FC<AuthorizedByProps> = ({
   };
 
   const headingLabel = label?.trim() || 'Authorized By';
-  const headingClass = labelClassName || 'text-xs uppercase tracking-wide text-gray-500';
+  const headingClass =
+    labelClassName || 'text-xs uppercase tracking-wide text-gray-500';
 
   return (
     <div
-      className={`print-avoid-break mt-6 flex flex-col gap-2 ${alignmentClasses[align]} ${className}`.trim()}
+      className={`authorized-by print-avoid-break mt-6 flex flex-col gap-2 ${alignmentClasses[align]} ${className}`.trim()}
     >
       <span className={headingClass}>{headingLabel}</span>
+
       {signatureUrl ? (
         <img
           src={signatureUrl}
@@ -56,10 +53,16 @@ const AuthorizedBy: React.FC<AuthorizedByProps> = ({
           crossOrigin="anonymous"
         />
       ) : (
-        <span className="block w-40 border-t border-gray-300 pt-6" aria-hidden="true" />
+        <span
+          className="block w-40 border-t border-gray-300 pt-6"
+          aria-hidden="true"
+        />
       )}
+
       {personName ? (
-        <span className="font-semibold text-sm text-gray-800">{personName}</span>
+        <span className="font-semibold text-sm text-gray-800">
+          {personName}
+        </span>
       ) : null}
     </div>
   );

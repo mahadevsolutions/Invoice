@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* PDF/print helpers */
+@media print {
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+  }
+
+  /* When pdfGenerator toggles hide-for-pdf we want the element completely hidden */
+  .no-print-footer.hide-for-pdf {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Also include helper for screen capture toggle (non-print capture) */
+.hide-for-pdf {
+  display: none !important;
+  visibility: hidden !important;
+}
+.show-for-pdf {
+  display: block !important;
+  visibility: visible !important;
+}

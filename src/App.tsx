@@ -27,6 +27,38 @@ const getCurrentDate = () => {
     return `${yyyy}-${mm}-${dd}`;
 };
 
+const composeFooterDetails = ({
+  companyName,
+  companyAddress,
+  companyPhone,
+  companyEmail,
+}: {
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+}): string => {
+  const parts: string[] = [];
+
+  const trimmedName = companyName?.trim();
+  const trimmedAddress = companyAddress
+    ?.trim()
+    ?.replace(/\s*\n\s*/g, ', '); // replace newlines with ", "
+
+  const trimmedPhone = companyPhone?.trim();
+  const trimmedEmail = companyEmail?.trim();
+
+  if (trimmedName) parts.push(trimmedName);
+  if (trimmedAddress) parts.push(trimmedAddress);
+
+  const contactParts = [trimmedPhone, trimmedEmail].filter(Boolean);
+  if (contactParts.length) parts.push(contactParts.join(' | '));
+
+  // create a compact single-line footer
+  return parts.join(' • ');
+};
+
+
 export const VISUAL_TEMPLATES = {
     DIGITAL_MARKETING: 'Digital Marketing Style',
     TAX_INVOICE: 'Tax Invoice Style',
@@ -38,14 +70,19 @@ const defaultLogoUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCA
 
 // --- Content Template Data ---
 // New preset templates (placeholders for now)
+const INVOICE_COMPANY_NAME = 'NUTHANA ENTERPRISES';
+const INVOICE_COMPANY_ADDRESS = '2-1-38, ROAD NO 4, PLOT NO 38, SRI VENKATESWARA\nCOLONY, BANDLAGUDA JAGIR, HYDERABAD';
+const INVOICE_COMPANY_EMAIL = 'nuthanasales@gmail.com';
+const INVOICE_COMPANY_PHONE = '6304569149';
+
 const INVOICE_TEMPLATE = {
     name: 'Invoice',
     data: {
         // Company
-        companyName: 'NUTHANA ENTERPRISES',
-        companyAddress: '2-1-38, ROAD NO 4, PLOT NO 38, SRI VENKATESWARA\nCOLONY, BANDLAGUDA JAGIR, HYDERABAD',
-        companyEmail: 'nuthanasales@gmail.com',
-        companyPhone: '6304569149',
+        companyName: INVOICE_COMPANY_NAME,
+        companyAddress: INVOICE_COMPANY_ADDRESS,
+        companyEmail: INVOICE_COMPANY_EMAIL,
+        companyPhone: INVOICE_COMPANY_PHONE,
         companyGstin: '36AAVFN0075F1Z2',
         companyBankName: 'ICICI BANK',
         companyAccountNo: '197405500089',
@@ -98,16 +135,27 @@ const INVOICE_TEMPLATE = {
         logoSrc: defaultLogoUrl,
         authorizedSignatureUrl: null,
         authorizedPersonName: null,
+        footerDetails: composeFooterDetails({
+            companyName: INVOICE_COMPANY_NAME,
+            companyAddress: INVOICE_COMPANY_ADDRESS,
+            companyPhone: INVOICE_COMPANY_PHONE,
+            companyEmail: INVOICE_COMPANY_EMAIL,
+        }),
     }
 };
+
+const PURCHASE_ORDER_COMPANY_NAME = 'MAHADEV SOLUTIONS';
+const PURCHASE_ORDER_COMPANY_ADDRESS = '123 Tech Road\nVisakhapatnam, AP 530001';
+const PURCHASE_ORDER_COMPANY_EMAIL = 'mahadevsolution7@gmail.com';
+const PURCHASE_ORDER_COMPANY_PHONE = '9030602967';
 
 const PURCHASE_ORDER_TEMPLATE = {
     name: "Purchase Order",
     data: {
-        companyName: 'MAHADEV SOLUTIONS',
-        companyAddress: '123 Tech Road\nVisakhapatnam, AP 530001',
-        companyEmail: 'mahadevsolution7@gmail.com',
-        companyPhone: '9030602967',
+        companyName: PURCHASE_ORDER_COMPANY_NAME,
+        companyAddress: PURCHASE_ORDER_COMPANY_ADDRESS,
+        companyEmail: PURCHASE_ORDER_COMPANY_EMAIL,
+        companyPhone: PURCHASE_ORDER_COMPANY_PHONE,
         clientName: 'Supplier Name',
         clientCompany: 'Supplier Company Inc.',
         clientAddress: '456 Supplier Ave\nHyderabad, TS 500001',
@@ -132,16 +180,27 @@ const PURCHASE_ORDER_TEMPLATE = {
         shipVia: 'FedEx Ground',
         fob: 'Origin',
         shippingCost: 50,
+        footerDetails: composeFooterDetails({
+            companyName: PURCHASE_ORDER_COMPANY_NAME,
+            companyAddress: PURCHASE_ORDER_COMPANY_ADDRESS,
+            companyPhone: PURCHASE_ORDER_COMPANY_PHONE,
+            companyEmail: PURCHASE_ORDER_COMPANY_EMAIL,
+        }),
     }
 };
+
+const QUOTATION_COMPANY_NAME = 'M/S MAHADEV SOLUTIONS';
+const QUOTATION_COMPANY_ADDRESS = 'Plot No. 21, H.No. 3-24/74, Vikas Nagar Colony, Near Sai baba Temple, Bandlaguda Jagir,\nHyderabad, Telangana, India - 500086';
+const QUOTATION_COMPANY_EMAIL = 'mahadevsolutions@outlook.com';
+const QUOTATION_COMPANY_PHONE = '+91 90306 02967';
 
 const QUOTATION_TEMPLATE = {
     name: "Quotation",
     data: {
-        companyName: 'M/S MAHADEV SOLUTIONS',
-        companyAddress: 'Plot No. 21, H.No. 3-24/74, Vikas Nagar Colony, Near Sai baba Temple, Bandlaguda Jagir,\nHyderabad, Telangana, India - 500086',
-        companyEmail: 'mahadevsolutions@outlook.com',
-        companyPhone: '+91 90306 02967',
+        companyName: QUOTATION_COMPANY_NAME,
+        companyAddress: QUOTATION_COMPANY_ADDRESS,
+        companyEmail: QUOTATION_COMPANY_EMAIL,
+        companyPhone: QUOTATION_COMPANY_PHONE,
         companyGstin: '36ACEFM8212G1ZB',
         companyPan: 'ACEFM8212G',
 
@@ -177,6 +236,12 @@ const QUOTATION_TEMPLATE = {
         fob: '',
         shippingCost: 0,
         gstType: 'CGST/SGST',
+        footerDetails: composeFooterDetails({
+            companyName: QUOTATION_COMPANY_NAME,
+            companyAddress: QUOTATION_COMPANY_ADDRESS,
+            companyPhone: QUOTATION_COMPANY_PHONE,
+            companyEmail: QUOTATION_COMPANY_EMAIL,
+        }),
     }
 };
 
@@ -275,6 +340,7 @@ export default function App() {
     const [authorizedPersonName, setAuthorizedPersonName] = useState('');
     const [items, setItems] = useState<Item[]>([]);
     const [notes, setNotes] = useState('');
+    const [footerDetails, setFooterDetails] = useState('');
     const [template, setTemplate] = useState(VISUAL_TEMPLATES.DIGITAL_MARKETING);
     const [templateConfigs, setTemplateConfigs] = useState<Record<string, TemplateConfig | undefined>>({});
     const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
@@ -361,6 +427,7 @@ export default function App() {
         setProjectSubject(''); setDate(getCurrentDate()); setQuotationNumber('');
         setItems([]); setNotes(''); setInvoiceTitle(''); setLogoSrc(defaultLogoUrl);
         setAuthorizedSignatureUrl(null); setAuthorizedPersonName('');
+        setFooterDetails('');
         // Clear Purchase Order related fields
         setDeliveryAddress(''); setDeliveryDate(getCurrentDate()); setRequisitioner('');
         setShipVia(''); setFob(''); setShippingCost(0);
@@ -392,6 +459,12 @@ export default function App() {
     const loadContentTemplate = (templateEntry: any) => {
         const templateData = templateEntry?.data ?? templateEntry;
         const name = templateEntry?.name ?? templateData?.name ?? '';
+        const footerText = templateData.footerDetails ?? composeFooterDetails({
+            companyName: templateData.companyName,
+            companyAddress: templateData.companyAddress,
+            companyPhone: templateData.companyPhone,
+            companyEmail: templateData.companyEmail,
+        });
         setCompanyName(templateData.companyName);
         setCompanyAddress(templateData.companyAddress);
         setCompanyEmail(templateData.companyEmail);
@@ -410,6 +483,7 @@ export default function App() {
         setInvoiceTitle(templateData.invoiceTitle);
         setItems((templateData.items || []).map((item: any) => ({...item}))); // Deep copy
         setNotes(templateData.notes);
+        setFooterDetails(footerText || '');
         setTemplate(templateData.template);
         setActiveTemplateName(name);
         setLogoSrc(templateData.logoSrc);
@@ -444,7 +518,7 @@ export default function App() {
         // dispatch/delivery
         deliveryNote, buyersOrderNo, dispatchDocNo, dispatchedThrough, destination, termsOfDelivery,
         // totals/footer
-        roundOff, declaration,
+        roundOff, declaration, footerDetails,
         gstType,
         globalTaxRate,
         templateConfig: activeTemplateConfig,
@@ -472,8 +546,13 @@ export default function App() {
     const handleGeneratePdf = async () => {
         setIsGenerating(true);
         
-        // Create footer text from state
-    const footerLine = `${companyAddress.split('\n')[0]}, AP | ${companyPhone} | ${companyEmail}`;
+        const fallbackFooter = composeFooterDetails({
+            companyName,
+            companyAddress,
+            companyPhone,
+            companyEmail,
+        });
+        const footerLine = footerDetails && footerDetails.trim().length > 0 ? footerDetails : fallbackFooter;
         
         await generatePdf(previewRef, clientName, date, logoSrc, footerLine, (errorMsg) => showNotification(errorMsg, 'error'));
         setIsGenerating(false);
@@ -811,6 +890,20 @@ export default function App() {
                                     <select value={template} onChange={e => setTemplate(e.target.value)} className="w-full p-3 border rounded-md bg-white">
                                         {Object.values(VISUAL_TEMPLATES).map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
+                                </div>
+
+                                <div className="space-y-2 mb-6">
+                                    <h3 className="font-semibold text-lg border-b pb-2">Footer Details</h3>
+                                    <textarea
+                                        placeholder="Add company footer lines"
+                                        value={footerDetails}
+                                        onChange={(event) => setFooterDetails(event.target.value)}
+                                        className="w-full p-3 border rounded-md"
+                                        rows={3}
+                                    ></textarea>
+                                    <p className="text-xs text-gray-500">
+                                        These lines appear in the live preview and PDF footer. Use line breaks to control how the footer is stacked.
+                                    </p>
                                 </div>
 
                                 <div>
