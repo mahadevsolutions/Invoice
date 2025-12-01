@@ -819,222 +819,120 @@ export const loadPdfScripts = async (
 export const generatePdf = async (
   previewRef: RefObject<HTMLDivElement>,
   clientName: string,
-  dateStr: string,
+  date: string,
   logoSrc: string,
   footerText: string,
   onError: (msg: string) => void
 ): Promise<void> => {
   if (!window.jspdf || !window.html2canvas) {
-    onError('PDF libraries are not loaded. Call loadPdfScripts first.');
+    onError('PDF libraries are not loaded.');
     return;
   }
 
   const { jsPDF } = window.jspdf;
-  const html2canvas = window.html2canvas as typeof import('html2canvas');
+  const html2canvas = window.html2canvas;
+  const input = previewRef.current;
 
-  const root = previewRef?.current;
-  if (!root) {
+  if (!input) {
     onError('Preview element not found.');
     return;
   }
 
-  const captureTarget = root.querySelector<HTMLElement>('#invoice-wrapper') ?? root;
-  if (!captureTarget) {
-    onError('Invoice wrapper not found.');
-    return;
-  }
-
-  const watermarkPromise = preloadWatermark(logoSrc);
-
-  const toggledHideEls = toggleNoPrintFooters();
-  const styleSnapshots = new Map<HTMLElement, StyleSnapshot>();
-  prepareWrapperForCapture(captureTarget, styleSnapshots);
-  const adjustedFixedEls = adjustFixedElements(captureTarget, styleSnapshots);
-  if (adjustedFixedEls.length) {
-    console.warn('Temporarily adjusting fixed-position elements for PDF capture.');
-  }
-
-  const previousWrapperScrollTop = captureTarget.scrollTop;
-  const previousWrapperScrollLeft = captureTarget.scrollLeft;
-  const previousWindowScrollX = window.pageXOffset;
-  const previousWindowScrollY = window.pageYOffset;
-  captureTarget.scrollTop = 0;
-  captureTarget.scrollLeft = 0;
-  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-
-  let cleaned = false;
-  const cleanup = () => {
-    if (cleaned) return;
-    cleaned = true;
-    captureTarget.scrollTop = previousWrapperScrollTop;
-    captureTarget.scrollLeft = previousWrapperScrollLeft;
-    window.scrollTo({ top: previousWindowScrollY, left: previousWindowScrollX, behavior: 'auto' });
-    restoreStyles(Array.from(styleSnapshots.values()));
-    toggledHideEls.forEach((el) => el.classList.remove('hide-for-pdf'));
-  };
-
-  await waitForLayout();
-  await ensureFontsReady();
-
-  const html2canvasFactory = (html2canvas as any)?.default ?? (html2canvas as any);
-  if (typeof html2canvasFactory !== 'function') {
-    cleanup();
-    onError('html2canvas is unavailable.');
-    return;
-  }
-
-  const html2canvasInstance = html2canvasFactory as Html2CanvasInstance;
-
-  const deviceScale = Math.min(2, window.devicePixelRatio || 1) || 1;
-  const baseOptions = {
-    scale: deviceScale,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    backgroundColor: '#ffffff',
-    scrollX: 0,
-    scrollY: 0,
-    ignoreElements: (node: Element) => node.classList?.contains('hide-for-pdf') ?? false
-  };
-
   try {
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidthMm = pdf.internal.pageSize.getWidth();
-    const pdfHeightMm = pdf.internal.pageSize.getHeight();
-    const contentHeightMm = pdfHeightMm - FOOTER_HEIGHT_MM;
-    if (!Number.isFinite(contentHeightMm) || contentHeightMm <= 0) {
-      throw new Error('Invalid PDF page dimensions.');
+    // Ensure fonts and images are loaded
+    if ((document as any).fonts && (document as any).fonts.ready) {
+      await (document as any).fonts.ready;
     }
 
-    const wrapperRect = captureTarget.getBoundingClientRect();
-    const wrapperWidthPx =
-      captureTarget.scrollWidth ||
-      wrapperRect.width ||
-      captureTarget.clientWidth ||
-      captureTarget.offsetWidth ||
-      0;
-    const pxPerMmFallback = (window.devicePixelRatio || 1) * (96 / 25.4);
-    let pxPerMm = wrapperWidthPx > 0 ? wrapperWidthPx / pdfWidthMm : pxPerMmFallback;
-    if (!Number.isFinite(pxPerMm) || pxPerMm <= 0) {
-      pxPerMm = pxPerMmFallback;
-    }
-    let pageContentPx = Math.floor(contentHeightMm * pxPerMm);
-    if (!Number.isFinite(pageContentPx) || pageContentPx <= 0) {
-      pageContentPx = Math.floor(contentHeightMm * pxPerMmFallback);
-    }
-    pageContentPx = Math.max(pageContentPx, 1);
-
-    let pageCanvases: HTMLCanvasElement[] = [];
-
-    try {
-      const containers = buildPageContainers(captureTarget, pageContentPx);
-      if (containers.length) {
-        const domPageCanvases = await capturePageContainers(containers, {
-          html2canvasFactory: html2canvasInstance,
-          baseOptions
-        });
-        if (domPageCanvases.length) {
-          pageCanvases = domPageCanvases;
-          console.info(
-            `PDF generation: using DOM page-splitting strategy (${pageCanvases.length} pages).`
-          );
-        }
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (message === DOM_SPLIT_ERROR_CODE || (err as Error)?.name === DOM_SPLIT_ERROR_CODE) {
-        console.warn('DOM page-splitting aborted due to oversized element; falling back to canvas slicing.');
-      } else {
-        console.warn('DOM page-splitting failed; falling back to canvas slicing.', err);
-      }
-      pageCanvases = [];
-    }
-
-    if (!pageCanvases.length) {
-      // FALLBACK: the DOM-based strategy failed; capture full canvas and slice.
-      const fullCanvas = await renderElementToCanvas(captureTarget, html2canvasInstance, baseOptions);
-      const pageCanvasPx = computePageCanvasPx(fullCanvas.width, contentHeightMm, pdfWidthMm);
-      pageCanvases = sliceCanvasIntoPages(fullCanvas, pageCanvasPx);
-      console.warn(
-        `PDF generation: using canvas-slice fallback (${Math.max(pageCanvases.length, 1)} pages).`
-      );
-    }
-
-    if (!pageCanvases.length) {
-      throw new Error('No pages were captured for PDF export.');
-    }
-
-    const watermark = await watermarkPromise.catch((err) => {
-      console.warn('Watermark preload rejected.', err);
-      return null;
+    // --- OPTIMIZED HTML2CANVAS CONFIG ---
+    // We use scrollHeight to ensure the ENTIRE document is captured, 
+    // preventing the bottom from being cut off.
+    const canvas = await html2canvas(input, {
+      scale: 2, // High resolution
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      height: input.scrollHeight, // Capture full scrollable height
+      windowHeight: input.scrollHeight, // Ensure full window height is simulated
+      ignoreElements: (el: Element) => el.classList.contains('no-print-footer')
     });
 
-    const totalPages = pageCanvases.length;
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    
+    // --- PAGE GEOMETRY ---
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const MARGIN_TOP = 20;
+    const MARGIN_BOTTOM = 20;
 
-    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-      const pageCanvas = pageCanvases[pageIndex];
-      const primaryDataUrl = pageCanvas.toDataURL('image/png');
+    // Page 1: Starts at 0 (No Top Margin), Ends at Bottom Margin
+    const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM;
+    // Other Pages: Starts at Top Margin, Ends at Bottom Margin
+    const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP - MARGIN_BOTTOM;
 
-      if (pageIndex > 0) {
-        pdf.addPage();
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+    let pageNumber = 1;
+
+    // Preload watermark
+    const watermark = await preloadWatermark(logoSrc);
+
+    // --- HELPER: Footer & Masks ---
+    const addFooterAndMasks = (pageNum: number, isFirstPage: boolean) => {
+      pdf.setFillColor(255, 255, 255);
+      
+      // Mask Top Margin (Only for Page 2+)
+      if (!isFirstPage) {
+        pdf.rect(0, 0, pdfWidth, MARGIN_TOP, 'F');
       }
 
-      tryAddImage(
-        pdf,
-        primaryDataUrl,
-        'PNG',
-        0,
-        0,
-        pdfWidthMm,
-        contentHeightMm,
-        () => {
-          const fallbackCanvas = document.createElement('canvas');
-          fallbackCanvas.width = Math.max(1, Math.floor(pageCanvas.width / 2));
-          fallbackCanvas.height = Math.max(1, Math.floor(pageCanvas.height / 2));
-          const fallbackCtx = fallbackCanvas.getContext('2d');
-          if (fallbackCtx) {
-            fallbackCtx.fillStyle = '#ffffff';
-            fallbackCtx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
-            fallbackCtx.drawImage(
-              pageCanvas,
-              0,
-              0,
-              pageCanvas.width,
-              pageCanvas.height,
-              0,
-              0,
-              fallbackCanvas.width,
-              fallbackCanvas.height
-            );
-          }
-          return {
-            dataUrl: fallbackCanvas.toDataURL('image/jpeg', 0.85),
-            type: 'JPEG' as ImageType
-          };
-        }
-      );
+      // Mask Bottom Margin (For all pages)
+      pdf.rect(0, pdfHeight - MARGIN_BOTTOM, pdfWidth, MARGIN_BOTTOM, 'F');
 
-      drawWatermark(pdf, watermark, pageIndex + 1, pdfWidthMm, contentHeightMm);
-      drawFooterAndSignatureLine(
-        pdf,
-        pageIndex + 1,
-        totalPages,
-        pdfWidthMm,
-        pdfHeightMm,
-        footerText,
-        clientName,
-        dateStr,
-        SIGNATURE_FOOTER_TEXT
-      );
+      // Add Footer Text
+      pdf.setFontSize(9);
+      pdf.setTextColor(128, 128, 128);
+      pdf.text(footerText, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
+
+      // Add Watermark
+      try {
+        const contentHeight = isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS;
+        drawWatermark(pdf, watermark, pageNum, pdfWidth, contentHeight);
+      } catch (e) {}
+    };
+
+    // --- PAGE 1 RENDER ---
+    // Draw at Y=0
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    addFooterAndMasks(pageNumber, true); // true = isFirstPage
+
+    heightLeft -= CONTENT_HEIGHT_PAGE1;
+    position -= CONTENT_HEIGHT_PAGE1;
+    pageNumber++;
+
+    // --- SUBSEQUENT PAGES RENDER ---
+    while (heightLeft > 0) {
+      pdf.addPage();
+      
+      // Draw image shifted down by MARGIN_TOP to create the white space
+      pdf.addImage(imgData, 'PNG', 0, position + MARGIN_TOP, imgWidth, imgHeight);
+      
+      addFooterAndMasks(pageNumber, false); // false = not FirstPage
+
+      heightLeft -= CONTENT_HEIGHT_OTHERS;
+      position -= CONTENT_HEIGHT_OTHERS;
+      pageNumber++;
     }
 
-    const filename = sanitizeFilename(clientName, dateStr);
-    pdf.save(filename);
+    pdf.save(`${clientName || 'invoice'}-${date}.pdf`);
+
   } catch (err) {
     console.error('PDF generation error:', err);
     onError('Could not generate PDF.');
-  } finally {
-    cleanup();
   }
 };
 

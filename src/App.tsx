@@ -32,11 +32,15 @@ const composeFooterDetails = ({
   companyAddress,
   companyPhone,
   companyEmail,
+  footerText = "This is an electronically generated document, no signature is required.",
+
+
 }: {
   companyName?: string;
   companyAddress?: string;
   companyPhone?: string;
   companyEmail?: string;
+  footerText?: string;
 }): string => {
   const parts: string[] = [];
 
@@ -74,6 +78,7 @@ const INVOICE_COMPANY_NAME = 'NUTHANA ENTERPRISES';
 const INVOICE_COMPANY_ADDRESS = '2-1-38, ROAD NO 4, PLOT NO 38, SRI VENKATESWARA\nCOLONY, BANDLAGUDA JAGIR, HYDERABAD';
 const INVOICE_COMPANY_EMAIL = 'nuthanasales@gmail.com';
 const INVOICE_COMPANY_PHONE = '6304569149';
+const INVOICE_FOOTER_TEXT = 'This is an electronically generated document, no signature is required.';
 
 const INVOICE_TEMPLATE = {
     name: 'Invoice',
@@ -136,10 +141,7 @@ const INVOICE_TEMPLATE = {
         authorizedSignatureUrl: null,
         authorizedPersonName: null,
         footerDetails: composeFooterDetails({
-            companyName: INVOICE_COMPANY_NAME,
-            companyAddress: INVOICE_COMPANY_ADDRESS,
-            companyPhone: INVOICE_COMPANY_PHONE,
-            companyEmail: INVOICE_COMPANY_EMAIL,
+            footerText: INVOICE_FOOTER_TEXT,
         }),
     }
 };
@@ -180,11 +182,9 @@ const PURCHASE_ORDER_TEMPLATE = {
         shipVia: 'FedEx Ground',
         fob: 'Origin',
         shippingCost: 50,
+       
         footerDetails: composeFooterDetails({
-            companyName: PURCHASE_ORDER_COMPANY_NAME,
-            companyAddress: PURCHASE_ORDER_COMPANY_ADDRESS,
-            companyPhone: PURCHASE_ORDER_COMPANY_PHONE,
-            companyEmail: PURCHASE_ORDER_COMPANY_EMAIL,
+            footerText: INVOICE_FOOTER_TEXT,
         }),
     }
 };
@@ -237,10 +237,7 @@ const QUOTATION_TEMPLATE = {
         shippingCost: 0,
         gstType: 'CGST/SGST',
         footerDetails: composeFooterDetails({
-            companyName: QUOTATION_COMPANY_NAME,
-            companyAddress: QUOTATION_COMPANY_ADDRESS,
-            companyPhone: QUOTATION_COMPANY_PHONE,
-            companyEmail: QUOTATION_COMPANY_EMAIL,
+            footerText: INVOICE_FOOTER_TEXT,
         }),
     }
 };
