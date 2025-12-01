@@ -839,36 +839,86 @@ export const generatePdf = async (
   }
 
   try {
-    // Ensure fonts and images are loaded
     if ((document as any).fonts && (document as any).fonts.ready) {
       await (document as any).fonts.ready;
     }
 
-    // --- OPTIMIZED HTML2CANVAS CONFIG ---
-    // We use scrollHeight to ensure the ENTIRE document is captured, 
-    // preventing the bottom from being cut off.
+    // Row-aware pagination math
+    const inputWidthPx = input.offsetWidth;
+    const pxPerMm = inputWidthPx / 210; // A4 width
+
+    const PAGE_HEIGHT_MM = 297;
+    const MARGIN_TOP_MM = 20;
+    const MARGIN_BOTTOM_MM = 20;
+
+    const PAGE_1_CUT = (PAGE_HEIGHT_MM - MARGIN_BOTTOM_MM) * pxPerMm;
+    const SUBSEQUENT_PAGE_HEIGHT_PX = (PAGE_HEIGHT_MM - MARGIN_TOP_MM - MARGIN_BOTTOM_MM) * pxPerMm;
+
+    // Reset previous adjustments
+    const elements = Array.from(input.querySelectorAll('.avoid-break')) as HTMLElement[];
+    elements.forEach((el) => {
+      // reset any marginTop/paddingTop we may have set earlier
+      (el as HTMLElement).style.marginTop = '';
+      if (el.tagName === 'TR') {
+        const cells = Array.from(el.children) as HTMLElement[];
+        cells.forEach((td) => (td.style.paddingTop = ''));
+      }
+    });
+
+    // --- SMART BREAK LOOP (Row-aware) ---
+    elements.forEach((el) => {
+      const rect = el.getBoundingClientRect();
+      const containerRect = input.getBoundingClientRect();
+      const relativeTop = rect.top - containerRect.top;
+      const height = el.offsetHeight;
+      const relativeBottom = relativeTop + height;
+
+      // Start with page 1 cut
+      let cutLine = PAGE_1_CUT;
+      while (cutLine < relativeTop) {
+        cutLine += SUBSEQUENT_PAGE_HEIGHT_PX;
+      }
+
+      // If element crosses the cut line, push it down
+      if (relativeTop < cutLine && relativeBottom > cutLine) {
+        const pushAmount = Math.ceil(cutLine - relativeTop) + 20; // buffer
+        console.debug(`Pushing ${el.tagName} down by ${pushAmount}px`);
+
+        if (el.tagName === 'TR') {
+          const cells = Array.from(el.children) as HTMLElement[];
+          cells.forEach((td) => {
+            const currentPadding = parseInt(window.getComputedStyle(td).paddingTop) || 0;
+            td.style.paddingTop = `${currentPadding + pushAmount}px`;
+          });
+        } else {
+          (el as HTMLElement).style.marginTop = `${pushAmount}px`;
+        }
+      }
+    });
+
+    // Wait a moment for reflow
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // --- 3. CAPTURE DOCUMENT ---
     const canvas = await html2canvas(input, {
-      scale: 2, // High resolution
+      scale: 2,
       useCORS: true,
-      allowTaint: true,
       logging: false,
-      height: input.scrollHeight, // Capture full scrollable height
-      windowHeight: input.scrollHeight, // Ensure full window height is simulated
+      height: input.scrollHeight,
+      windowHeight: input.scrollHeight,
       ignoreElements: (el: Element) => el.classList.contains('no-print-footer')
     });
 
+    // --- Slicing & PDF Creation (unchanged) ---
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    // --- PAGE GEOMETRY ---
+
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
     const MARGIN_TOP = 20;
     const MARGIN_BOTTOM = 20;
 
-    // Page 1: Starts at 0 (No Top Margin), Ends at Bottom Margin
     const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM;
-    // Other Pages: Starts at Top Margin, Ends at Bottom Margin
     const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP - MARGIN_BOTTOM;
 
     const imgWidth = pdfWidth;
@@ -878,58 +928,36 @@ export const generatePdf = async (
     let position = 0;
     let pageNumber = 1;
 
-    // Preload watermark
     const watermark = await preloadWatermark(logoSrc);
 
-    // --- HELPER: Footer & Masks ---
     const addFooterAndMasks = (pageNum: number, isFirstPage: boolean) => {
       pdf.setFillColor(255, 255, 255);
-      
-      // Mask Top Margin (Only for Page 2+)
-      if (!isFirstPage) {
-        pdf.rect(0, 0, pdfWidth, MARGIN_TOP, 'F');
-      }
-
-      // Mask Bottom Margin (For all pages)
+      if (!isFirstPage) pdf.rect(0, 0, pdfWidth, MARGIN_TOP, 'F');
       pdf.rect(0, pdfHeight - MARGIN_BOTTOM, pdfWidth, MARGIN_BOTTOM, 'F');
-
-      // Add Footer Text
       pdf.setFontSize(9);
       pdf.setTextColor(128, 128, 128);
       pdf.text(footerText, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-
-      // Add Watermark
-      try {
-        const contentHeight = isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS;
-        drawWatermark(pdf, watermark, pageNum, pdfWidth, contentHeight);
-      } catch (e) {}
+      try { drawWatermark(pdf, watermark, pageNum, pdfWidth, isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS); } catch (e) {}
     };
 
-    // --- PAGE 1 RENDER ---
-    // Draw at Y=0
+    // Page 1
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    addFooterAndMasks(pageNumber, true); // true = isFirstPage
+    addFooterAndMasks(pageNumber, true);
 
     heightLeft -= CONTENT_HEIGHT_PAGE1;
     position -= CONTENT_HEIGHT_PAGE1;
     pageNumber++;
 
-    // --- SUBSEQUENT PAGES RENDER ---
     while (heightLeft > 0) {
       pdf.addPage();
-      
-      // Draw image shifted down by MARGIN_TOP to create the white space
       pdf.addImage(imgData, 'PNG', 0, position + MARGIN_TOP, imgWidth, imgHeight);
-      
-      addFooterAndMasks(pageNumber, false); // false = not FirstPage
-
+      addFooterAndMasks(pageNumber, false);
       heightLeft -= CONTENT_HEIGHT_OTHERS;
       position -= CONTENT_HEIGHT_OTHERS;
       pageNumber++;
     }
 
-    pdf.save(`${clientName || 'invoice'}-${date}.pdf`);
-
+    pdf.save(sanitizeFilename(clientName || 'invoice', date));
   } catch (err) {
     console.error('PDF generation error:', err);
     onError('Could not generate PDF.');

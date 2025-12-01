@@ -153,7 +153,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const bankDetailsVisible = isSectionVisible(resolvedConfig, 'bankDetails', true);
 
   return (
-    <div className="border border-gray-400 bg-white p-6 font-sans text-xs text-gray-900">
+    <div className="bg-white p-6 font-sans text-xs text-gray-900">
       <style>{`
         @media print {
           .print-avoid-break { break-inside: avoid; }
@@ -162,7 +162,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       `}</style>
 
       {headerVisible && (
-        <header className="mb-4 text-center">
+        <header className="mb-4 text-center avoid-break">
           {isFieldVisible(resolvedConfig, 'header', 'title') && (
             <h1 className="text-2xl font-bold text-gray-900">
               {invoiceData.invoiceTitle || getFieldLabel(resolvedConfig, 'header', 'title', 'Tax Invoice')}
@@ -177,7 +177,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {companySectionVisible && (
-        <section className="mb-4 border-y border-gray-400 py-2 text-center text-xxs text-gray-700">
+        <section className="mb-4 border-y border-gray-400 py-2 text-center text-xxs text-gray-700 avoid-break">
           {isFieldVisible(resolvedConfig, 'companyDetails', 'companyHeading') && (
             <h2 className="text-lg font-bold text-gray-900">
               {invoiceData.companyName || getFieldLabel(resolvedConfig, 'companyDetails', 'companyHeading', 'Company Name')}
@@ -210,7 +210,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         </section>
       )}
 
-      <section className="mb-2 grid grid-cols-1 gap-2 text-xxs md:grid-cols-3">
+      <section className="mb-2 grid grid-cols-1 gap-2 text-xxs md:grid-cols-3 avoid-break">
         {consigneeVisible && (
           <div className="border border-gray-400 p-2">
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
@@ -335,11 +335,11 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         )}
       </section>
 
-      <section className="mb-3 print-avoid-break">
+      <section className="mb-3">
         <div className="overflow-hidden rounded border border-gray-400">
           <table className="w-full border-collapse text-left text-xxs">
             <thead className="bg-gray-100 uppercase tracking-wide text-gray-600">
-              <tr>
+              <tr className="avoid-break">
                 {tableColumns.map((column) => (
                   <th
                     key={column.key}
@@ -360,7 +360,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                 </tr>
               ) : (
                 itemsWithCalculations.map((item: any, index: number) => (
-                  <tr key={`${item.service}-${index}`} className="border-t border-gray-200">
+                  <tr key={`${item.service}-${index}`} className="avoid-break border-t border-gray-200">
                     {tableColumns.map((column) => {
                       const content = renderCell(item, column.key, column.formatter || 'text');
                       const isNumeric = column.formatter === 'currency' || column.formatter === 'number';
@@ -382,52 +382,52 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       </section>
 
       {Object.keys(hsnSummary).length > 0 && (
-        <section className="mb-3 print-avoid-break">
+        <section className="mb-3">
           <div className="overflow-hidden rounded border border-gray-400">
             <table className="w-full border-collapse text-xxs">
               <thead className="bg-gray-100 text-gray-700">
-              <tr>
+                <tr className="avoid-break">
                   <th className="border border-gray-300 p-2 text-left">HSN</th>
                   <th className="border border-gray-300 p-2 text-right">Taxable Value</th>
-                {gstType === 'IGST' ? (
-                  <>
-                    <th className="border border-gray-300 p-2 text-right">IGST Rate</th>
-                    <th className="border border-gray-300 p-2 text-right">IGST Amount</th>
-                  </>
-                ) : (
-                  <>
-                    <th className="border border-gray-300 p-2 text-right">CGST Rate</th>
-                    <th className="border border-gray-300 p-2 text-right">CGST Amount</th>
-                    <th className="border border-gray-300 p-2 text-right">SGST Rate</th>
-                    <th className="border border-gray-300 p-2 text-right">SGST Amount</th>
-                  </>
-                )}
-                  <th className="border border-gray-300 p-2 text-right">Total Tax</th>
-              </tr>
-            </thead>
-              <tbody>
-              {Object.entries(hsnSummary).map(([hsn, summary]) => (
-                <tr key={hsn} className="border-t border-gray-200">
-                  <td className="border border-gray-200 p-2 text-left">{hsn}</td>
-                  <td className="border border-gray-200 p-2 text-right">{formatCurrency(summary.taxableValue)}</td>
                   {gstType === 'IGST' ? (
-                    <>
-                      <td className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>
-                      <td className="border border-gray-200 p-2 text-right">{formatCurrency(summary.igst)}</td>
-                    </>
+                    [
+                      <th key="igst-rate" className="border border-gray-300 p-2 text-right">IGST Rate</th>,
+                      <th key="igst-amount" className="border border-gray-300 p-2 text-right">IGST Amount</th>,
+                    ]
                   ) : (
-                    <>
-                      <td className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>
-                      <td className="border border-gray-200 p-2 text-right">{formatCurrency(summary.cgst)}</td>
-                      <td className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>
-                      <td className="border border-gray-200 p-2 text-right">{formatCurrency(summary.sgst)}</td>
-                    </>
+                    [
+                      <th key="cgst-rate" className="border border-gray-300 p-2 text-right">CGST Rate</th>,
+                      <th key="cgst-amount" className="border border-gray-300 p-2 text-right">CGST Amount</th>,
+                      <th key="sgst-rate" className="border border-gray-300 p-2 text-right">SGST Rate</th>,
+                      <th key="sgst-amount" className="border border-gray-300 p-2 text-right">SGST Amount</th>,
+                    ]
                   )}
-                  <td className="border border-gray-200 p-2 text-right">
-                    {formatCurrency(summary.cgst + summary.sgst + summary.igst)}
-                  </td>
+                  <th className="border border-gray-300 p-2 text-right">Total Tax</th>
                 </tr>
-              ))}
+              </thead>
+              <tbody>
+                {Object.entries(hsnSummary).map(([hsn, summary]) => (
+                  <tr key={hsn} className="avoid-break border-t border-gray-200">
+                    <td className="border border-gray-200 p-2 text-left">{hsn}</td>
+                    <td className="border border-gray-200 p-2 text-right">{formatCurrency(summary.taxableValue)}</td>
+                    {gstType === 'IGST' ? (
+                      [
+                        <td key={`${hsn}-rate`} className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>,
+                        <td key={`${hsn}-igst`} className="border border-gray-200 p-2 text-right">{formatCurrency(summary.igst)}</td>,
+                      ]
+                    ) : (
+                      [
+                        <td key={`${hsn}-rate1`} className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>,
+                        <td key={`${hsn}-cgst`} className="border border-gray-200 p-2 text-right">{formatCurrency(summary.cgst)}</td>,
+                        <td key={`${hsn}-rate2`} className="border border-gray-200 p-2 text-right">{formatNumber(summary.rate)}%</td>,
+                        <td key={`${hsn}-sgst`} className="border border-gray-200 p-2 text-right">{formatCurrency(summary.sgst)}</td>,
+                      ]
+                    )}
+                    <td className="border border-gray-200 p-2 text-right">
+                      {formatCurrency(summary.cgst + summary.sgst + summary.igst)}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -435,7 +435,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {totalsVisible && (
-        <section className="mb-3 flex justify-end print-avoid-break">
+        <section className="mb-3 flex justify-end avoid-break">
           <div className="w-full max-w-xs overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
             <div className="bg-gray-100 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-800">
               Tax Summary
@@ -507,7 +507,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {amountInWordsVisible && (
-        <section className="mb-2 border-t border-gray-400 pt-2 print-avoid-break">
+        <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
           {isFieldVisible(resolvedConfig, 'amountInWords', 'amountChargeableLabel') && (
             <p className="font-bold text-gray-800">
               {getFieldLabel(resolvedConfig, 'amountInWords', 'amountChargeableLabel', 'Amount Chargeable (in words)')}{': '}
@@ -518,7 +518,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {amountInWordsVisible && isFieldVisible(resolvedConfig, 'amountInWords', 'taxAmountLabel') && (
-        <section className="mb-2 print-avoid-break">
+        <section className="mb-2 avoid-break">
           <div className="border border-gray-400 border-t-0 p-2 font-bold text-gray-800">
             {getFieldLabel(resolvedConfig, 'amountInWords', 'taxAmountLabel', 'Tax Amount (in words)')}{': '}
             {taxInWords}
@@ -535,7 +535,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       />
 
       {bankDetailsVisible && (
-        <footer className="print-avoid-break border-t border-gray-400 pt-2 text-xxs text-gray-700">
+        <footer className="border-t border-gray-400 pt-2 text-xxs text-gray-700 avoid-break">
           <div>
             <h4 className="mb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'bankDetails', "Company's Bank Details")}
