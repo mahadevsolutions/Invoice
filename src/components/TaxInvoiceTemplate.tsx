@@ -153,7 +153,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const bankDetailsVisible = isSectionVisible(resolvedConfig, 'bankDetails', true);
 
   return (
-    <div className="border border-gray-400 bg-white p-6 font-sans text-xs text-gray-900">
+    <div className="bg-white p-6 font-sans text-xs text-gray-900">
       <style>{`
         @media print {
           .print-avoid-break { break-inside: avoid; }
@@ -435,7 +435,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {totalsVisible && (
-        <section className="mb-3 flex justify-end print-avoid-break">
+        <section className="mb-3 flex justify-end avoid-break">
           <div className="w-full max-w-xs overflow-hidden rounded border border-gray-300 bg-white shadow-sm">
             <div className="bg-gray-100 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-wide text-gray-800">
               Tax Summary
