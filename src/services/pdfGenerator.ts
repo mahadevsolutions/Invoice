@@ -1,6 +1,5 @@
 import { RefObject } from 'react';
 
-// --- Window augmentation to avoid TS errors when using global libs ---
 declare global {
   interface Window {
     jspdf?: any;
@@ -8,23 +7,10 @@ declare global {
   }
 }
 
-const FOOTER_HEIGHT_MM = 18;
-const FOOTER_INITIAL_FONT_SIZE = 9;
-const FOOTER_MIN_FONT_SIZE = 7;
-const FOOTER_FONT_STEP = 0.5;
-const FOOTER_MAX_LINES = 2;
-const FOOTER_PADDING_MM = 10;
+const WATERMARK_OPACITY = 0.06;
 const WATERMARK_MAX_WIDTH_RATIO = 0.45;
 const WATERMARK_MAX_HEIGHT_RATIO = 0.45;
-const SIGNATURE_FOOTER_TEXT =
-  'This is an electronically generated document, no signature is required.';
 const PAGE_TOP_PADDING_PX = 24;
-
-interface StyleSnapshot {
-  el: HTMLElement;
-  cssText: string;
-  hadInlineStyle: boolean;
-}
 
 interface WatermarkData {
   dataUrl: string;
@@ -32,7 +18,14 @@ interface WatermarkData {
   type: 'PNG' | 'JPEG';
 }
 
-// --- Utility: dynamically load a script ---
+interface PageGeometry {
+  widthMm: number;
+  heightMm: number;
+  contentHeightMm: number;
+  topMarginMm: number;
+  bottomMarginMm: number;
+}
+
 const loadScript = (src: string): Promise<void> =>
   new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) return resolve();
@@ -43,18 +36,6 @@ const loadScript = (src: string): Promise<void> =>
     script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
     document.body.appendChild(script);
   });
-
-// --- Helpers for working with jspdf state safely ---
-const safeSetOpacity = (pdf: any, opacity: number) => {
-  try {
-    if (typeof pdf.setGState === 'function') {
-      // @ts-ignore - GState is runtime from jspdf
-      pdf.setGState(new (pdf as any).GState({ opacity }));
-    }
-  } catch (e) {
-    // ignore: opacity not supported
-  }
-};
 
 const waitForLayout = async () =>
   new Promise<void>((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
@@ -70,100 +51,21 @@ const ensureFontsReady = async () => {
   }
 };
 
-const sanitizeSegment = (value: string, fallback: string): string => {
-  const trimmed = value?.trim() ?? '';
-  const source = trimmed || fallback;
-  const sanitized = source
-    .replace(/[\\/:*?"<>|]+/g, '_')
-    .replace(/[^a-z0-9_\-]+/gi, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 100);
-  return sanitized || fallback;
-};
-
 const sanitizeFilename = (clientName: string, dateStr: string): string => {
-  const safeName = sanitizeSegment(clientName, 'invoice');
-  const safeDate = sanitizeSegment(
-    dateStr || new Date().toISOString().slice(0, 10),
-    new Date().toISOString().slice(0, 10)
-  );
+  const sanitize = (value: string, fallback: string): string => {
+    const trimmed = value?.trim() ?? '';
+    const source = trimmed || fallback;
+    return source
+      .replace(/[\\/:*?"<>|]+/g, '_')
+      .replace(/[^a-z0-9_\-]+/gi, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 100) || fallback;
+  };
+
+  const safeName = sanitize(clientName, 'invoice');
+  const safeDate = sanitize(dateStr || new Date().toISOString().slice(0, 10), new Date().toISOString().slice(0, 10));
   return `${safeName}-${safeDate}.pdf`;
-};
-
-const toggleNoPrintFooters = (): HTMLElement[] => {
-  const toggled: HTMLElement[] = [];
-  document.querySelectorAll<HTMLElement>('.no-print-footer').forEach((element) => {
-    if (!element.classList.contains('hide-for-pdf')) {
-      element.classList.add('hide-for-pdf');
-      toggled.push(element);
-    }
-  });
-  return toggled;
-};
-
-const snapshotStyle = (map: Map<HTMLElement, StyleSnapshot>, el: HTMLElement) => {
-  if (map.has(el)) return;
-  map.set(el, {
-    el,
-    cssText: el.getAttribute('style') ?? '',
-    hadInlineStyle: el.hasAttribute('style')
-  });
-};
-
-const restoreStyles = (snapshots: StyleSnapshot[]) => {
-  snapshots.forEach(({ el, cssText, hadInlineStyle }) => {
-    if (hadInlineStyle) {
-      el.setAttribute('style', cssText);
-    } else {
-      el.removeAttribute('style');
-    }
-  });
-};
-
-const prepareWrapperForCapture = (
-  wrapper: HTMLElement,
-  styleMap: Map<HTMLElement, StyleSnapshot>
-) => {
-  snapshotStyle(styleMap, wrapper);
-  wrapper.style.height = 'auto';
-  wrapper.style.maxHeight = 'none';
-  wrapper.style.overflow = 'visible';
-  wrapper.style.visibility = 'visible';
-  wrapper.style.background = '#ffffff';
-};
-
-const adjustFixedElements = (
-  root: HTMLElement,
-  styleMap: Map<HTMLElement, StyleSnapshot>
-) => {
-  const adjusted: HTMLElement[] = [];
-  const allNodes = root.querySelectorAll<HTMLElement>('*');
-  allNodes.forEach((element) => {
-    const computed = window.getComputedStyle(element);
-    if (computed.position === 'fixed') {
-      snapshotStyle(styleMap, element);
-      element.style.position = 'static';
-      adjusted.push(element);
-    }
-  });
-  return adjusted;
-};
-
-type Html2CanvasInstance = (element: HTMLElement, options?: any) => Promise<HTMLCanvasElement>;
-
-interface CapturePageOptions {
-  html2canvasFactory: Html2CanvasInstance;
-  baseOptions: Record<string, unknown>;
-}
-
-const DOM_SPLIT_ERROR_CODE = 'ELEMENT_TOO_BIG_FOR_PAGE';
-
-const describeElementForLogs = (element: HTMLElement): string => {
-  const id = element.id ? `#${element.id}` : '';
-  const className = (element.className || '').toString().trim().replace(/\s+/g, '.');
-  const classes = className ? `.${className}` : '';
-  return `${element.tagName.toLowerCase()}${id}${classes}`;
 };
 
 const getElementOuterHeight = (element: HTMLElement): number => {
@@ -172,250 +74,6 @@ const getElementOuterHeight = (element: HTMLElement): number => {
   const marginTop = Number.parseFloat(styles.marginTop) || 0;
   const marginBottom = Number.parseFloat(styles.marginBottom) || 0;
   return Math.ceil(rect.height + marginTop + marginBottom);
-};
-
-const isElementTooBigForPage = (el: HTMLElement, pageContentPx: number): boolean => {
-  if (!Number.isFinite(pageContentPx) || pageContentPx <= 0) {
-    return false;
-  }
-  return getElementOuterHeight(el) > pageContentPx + 1;
-};
-
-const buildPageContainers = (wrapper: HTMLElement, pageContentPx: number): HTMLElement[] => {
-  if (!Number.isFinite(pageContentPx) || pageContentPx <= 0) {
-    return [];
-  }
-
-  const children = Array.from(wrapper.children).filter((node): node is HTMLElement =>
-    node instanceof HTMLElement && !node.classList.contains('hide-for-pdf')
-  );
-
-  const wrapperRect = wrapper.getBoundingClientRect();
-  const wrapperWidthPx = Math.ceil(
-    wrapper.scrollWidth || wrapperRect.width || wrapper.clientWidth || wrapper.offsetWidth || 0
-  );
-
-  if (!children.length) {
-    const singleContainer = wrapper.cloneNode(true) as HTMLElement;
-    if (singleContainer.id) {
-      singleContainer.removeAttribute('id');
-    }
-    singleContainer.style.height = 'auto';
-    singleContainer.style.maxHeight = 'none';
-    singleContainer.style.overflow = 'visible';
-    singleContainer.style.boxSizing = 'border-box';
-    singleContainer.dataset.pdfPageContainer = 'true';
-    if (PAGE_TOP_PADDING_PX > 0) {
-      singleContainer.style.paddingTop = '0px';
-    }
-    return [singleContainer];
-  }
-
-  const createPageContainer = (isFirst: boolean) => {
-    const clone = wrapper.cloneNode(false) as HTMLElement;
-    if (clone.id) {
-      clone.removeAttribute('id');
-    }
-    clone.innerHTML = '';
-    clone.style.height = 'auto';
-    clone.style.maxHeight = 'none';
-    clone.style.overflow = 'visible';
-    clone.style.boxSizing = 'border-box';
-    if (wrapperWidthPx > 0) {
-      clone.style.width = `${wrapperWidthPx}px`;
-    }
-    if (!isFirst && PAGE_TOP_PADDING_PX > 0) {
-      clone.style.paddingTop = `${PAGE_TOP_PADDING_PX}px`;
-    }
-    clone.dataset.pdfPageContainer = 'true';
-    return clone;
-  };
-
-  const containers: HTMLElement[] = [];
-  let currentContainer = createPageContainer(true);
-  let usedHeight = 0;
-
-  const finalizeCurrentContainer = () => {
-    if (currentContainer.childNodes.length) {
-      containers.push(currentContainer);
-    }
-  };
-
-  const ensureFitsOnCurrentPage = (blockHeight: number): boolean => {
-    if (usedHeight + blockHeight <= pageContentPx + 1) {
-      return true;
-    }
-
-    const isFirstElementOnPage = currentContainer.childNodes.length === 0;
-    if (isFirstElementOnPage && usedHeight > 0) {
-      currentContainer.style.paddingTop = '0px';
-      usedHeight = 0;
-      return usedHeight + blockHeight <= pageContentPx + 1;
-    }
-
-    return false;
-  };
-
-  children.forEach((child, index) => {
-    const blockHeight = getElementOuterHeight(child);
-    if (isElementTooBigForPage(child, pageContentPx)) {
-      console.warn(
-        `DOM page-splitting fallback: ${describeElementForLogs(child)} height ${blockHeight}px exceeds page capacity ${pageContentPx}px.`
-      );
-      const err = new Error(DOM_SPLIT_ERROR_CODE);
-      err.name = DOM_SPLIT_ERROR_CODE;
-      throw err;
-    }
-
-    if (!ensureFitsOnCurrentPage(blockHeight) && currentContainer.childNodes.length) {
-      finalizeCurrentContainer();
-      currentContainer = createPageContainer(false);
-      usedHeight = PAGE_TOP_PADDING_PX;
-    }
-
-    if (!ensureFitsOnCurrentPage(blockHeight)) {
-      console.warn(
-        `DOM page-splitting fallback: unable to fit ${describeElementForLogs(child)} within single page height (${blockHeight}px > ${pageContentPx}px).`
-      );
-      const err = new Error(DOM_SPLIT_ERROR_CODE);
-      err.name = DOM_SPLIT_ERROR_CODE;
-      throw err;
-    }
-
-    const clone = child.cloneNode(true) as HTMLElement;
-    if (clone.id) {
-      clone.removeAttribute('id');
-    }
-    currentContainer.appendChild(clone);
-    usedHeight += blockHeight;
-
-    const isLastChild = index === children.length - 1;
-    if (isLastChild) {
-      finalizeCurrentContainer();
-    }
-  });
-
-  return containers;
-};
-
-const capturePageContainers = async (
-  containers: HTMLElement[],
-  options: CapturePageOptions
-): Promise<HTMLCanvasElement[]> => {
-  if (!containers.length) {
-    return [];
-  }
-
-  const stagingRoot = document.createElement('div');
-  stagingRoot.style.position = 'fixed';
-  stagingRoot.style.left = '-10000px';
-  stagingRoot.style.top = '0';
-  stagingRoot.style.pointerEvents = 'none';
-  stagingRoot.style.opacity = '0';
-  stagingRoot.style.zIndex = '-1';
-  stagingRoot.style.background = '#ffffff';
-
-  containers.forEach((container, index) => {
-    container.dataset.pdfPageIndex = String(index);
-    container.style.boxSizing = 'border-box';
-    stagingRoot.appendChild(container);
-  });
-
-  document.body.appendChild(stagingRoot);
-  await waitForLayout();
-
-  const canvases: HTMLCanvasElement[] = [];
-  try {
-    for (const container of containers) {
-      let canvas: HTMLCanvasElement;
-      try {
-        canvas = await options.html2canvasFactory(container, options.baseOptions);
-      } catch (err) {
-        console.warn('html2canvas page capture failed; retrying with relaxed CORS.', err);
-        canvas = await options.html2canvasFactory(container, {
-          ...options.baseOptions,
-          useCORS: false,
-          allowTaint: true
-        });
-      }
-      canvases.push(canvas);
-    }
-  } finally {
-    stagingRoot.remove();
-  }
-
-  return canvases;
-};
-
-const computePageCanvasPx = (
-  canvasWidthPx: number,
-  contentHeightMm: number,
-  pdfWidthMm: number
-): number => Math.max(1, Math.round((contentHeightMm * canvasWidthPx) / pdfWidthMm));
-
-// FALLBACK: capture the entire wrapper when DOM-based splitting is not possible.
-const renderElementToCanvas = async (
-  element: HTMLElement,
-  html2canvasFactory: Html2CanvasInstance,
-  baseOptions: Record<string, unknown>
-): Promise<HTMLCanvasElement> => {
-  try {
-    return await html2canvasFactory(element, baseOptions);
-  } catch (firstErr) {
-    console.warn('html2canvas first attempt failed, retrying with allowTaint fallback.', firstErr);
-    try {
-      return await html2canvasFactory(element, {
-        ...baseOptions,
-        useCORS: false,
-        allowTaint: true
-      });
-    } catch (secondErr) {
-      console.error('html2canvas failed on second attempt.', secondErr);
-      throw secondErr;
-    }
-  }
-};
-
-// FALLBACK: slices a full-page canvas into per-page canvases.
-const sliceCanvasIntoPages = (
-  canvas: HTMLCanvasElement,
-  pageCanvasPx: number
-): HTMLCanvasElement[] => {
-  const slices: HTMLCanvasElement[] = [];
-  if (!canvas || pageCanvasPx <= 0) {
-    return slices;
-  }
-  const totalPages = Math.max(1, Math.ceil(canvas.height / pageCanvasPx));
-
-  for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-    const srcY = pageIndex * pageCanvasPx;
-    const sliceHeight = Math.min(pageCanvasPx, Math.max(0, canvas.height - srcY));
-    const sliceCanvas = document.createElement('canvas');
-    sliceCanvas.width = canvas.width;
-    sliceCanvas.height = pageCanvasPx;
-    const ctx = sliceCanvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Unable to acquire 2D context for page slice.');
-    }
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
-    if (sliceHeight > 0) {
-      ctx.drawImage(
-        canvas,
-        0,
-        srcY,
-        canvas.width,
-        sliceHeight,
-        0,
-        0,
-        canvas.width,
-        sliceHeight
-      );
-    }
-    slices.push(sliceCanvas);
-  }
-
-  return slices;
 };
 
 const preloadWatermark = async (logoSrc?: string): Promise<WatermarkData | null> => {
@@ -467,33 +125,13 @@ const preloadWatermark = async (logoSrc?: string): Promise<WatermarkData | null>
   }
 };
 
-type ImageType = 'PNG' | 'JPEG';
-
-const tryAddImage = (
-  pdf: any,
-  dataUrl: string,
-  type: ImageType,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  fallbackProducer?: () => { dataUrl: string; type: ImageType }
-) => {
+const safeSetOpacity = (pdf: any, opacity: number) => {
   try {
-    pdf.addImage(dataUrl, type, x, y, width, height, undefined, 'FAST');
-  } catch (err) {
-    console.warn('pdf.addImage failed; using fallback.', err);
-    if (fallbackProducer) {
-      try {
-        const fallback = fallbackProducer();
-        pdf.addImage(fallback.dataUrl, fallback.type, x, y, width, height, undefined, 'FAST');
-        return;
-      } catch (fallbackErr) {
-        console.warn('Fallback pdf.addImage failed.', fallbackErr);
-        throw fallbackErr;
-      }
+    if (typeof pdf.setGState === 'function') {
+      pdf.setGState(new (pdf as any).GState({ opacity }));
     }
-    throw err;
+  } catch (e) {
+    // opacity not supported
   }
 };
 
@@ -501,304 +139,495 @@ const drawWatermark = (
   pdf: any,
   watermark: WatermarkData | null,
   pageNumber: number,
-  pdfWidthMm: number,
-  contentHeightMm: number
+  geometry: PageGeometry
 ) => {
   if (!watermark) return;
-  const maxWidth = pdfWidthMm * WATERMARK_MAX_WIDTH_RATIO;
-  const maxHeight = contentHeightMm * WATERMARK_MAX_HEIGHT_RATIO;
+
+  const maxWidth = geometry.widthMm * WATERMARK_MAX_WIDTH_RATIO;
+  const maxHeight = geometry.contentHeightMm * WATERMARK_MAX_HEIGHT_RATIO;
   let targetWidth = maxWidth;
   let targetHeight = targetWidth * watermark.aspectRatio;
+
   if (targetHeight > maxHeight) {
     targetHeight = maxHeight;
     targetWidth = targetHeight / watermark.aspectRatio;
   }
-  const x = (pdfWidthMm - targetWidth) / 2;
-  const y = (contentHeightMm - targetHeight) / 2;
+
+  const x = (geometry.widthMm - targetWidth) / 2;
+  const y = geometry.topMarginMm + (geometry.contentHeightMm - targetHeight) / 2;
+
   pdf.setPage(pageNumber);
-  safeSetOpacity(pdf, 0.08);
+  safeSetOpacity(pdf, WATERMARK_OPACITY);
   try {
-    tryAddImage(pdf, watermark.dataUrl, watermark.type, x, y, targetWidth, targetHeight);
+    pdf.addImage(watermark.dataUrl, watermark.type, x, y, targetWidth, targetHeight, undefined, 'FAST');
   } finally {
     safeSetOpacity(pdf, 1);
   }
 };
 
-const truncateToMaxLines = (lines: string[], maxLines: number): string[] => {
-  if (lines.length <= maxLines) {
-    return lines;
-  }
-  if (maxLines <= 0) {
-    return [];
-  }
-  const truncated = lines.slice(0, maxLines);
-  const lastIndex = truncated.length - 1;
-  const ellipsis = '...';
-  truncated[lastIndex] = `${truncated[lastIndex].trimEnd()}${ellipsis}`;
-  return truncated;
-};
-
-const computeLineHeightMm = (pdf: any, fontSize: number): number => {
-  const scaleFactor = pdf.internal.scaleFactor || (72 / 25.4);
-  const lineHeightFactor = typeof pdf.getLineHeightFactor === 'function' ? pdf.getLineHeightFactor() : 1.15;
-  return (fontSize * lineHeightFactor) / scaleFactor;
-};
-
-interface FooterSlotResult {
-  lines: string[];
-  fontSize: number;
-  truncated: boolean;
+interface ElementInfo {
+  element: HTMLElement;
+  height: number;
+  isTable: boolean;
+  isTableHeader: boolean;
+  isTableRow: boolean;
+  isTableFooter: boolean;
+  isTaxSummary: boolean;
+  tableName?: string;
 }
 
-interface FooterLayoutInfo {
-  hasCenterLines: boolean;
-  centerLineHeight: number;
-  mainBaseline: number;
-  pageNumberBaseline: number;
+const analyzeElement = (element: HTMLElement): ElementInfo => {
+  const isTable = element.tagName === 'TABLE';
+  const isTableHeader = element.tagName === 'THEAD';
+  const isTableRow = element.tagName === 'TR';
+  const isTableFooter = element.tagName === 'TFOOT';
+  const isTaxSummary = element.classList.contains('tax-summary') ||
+                        element.querySelector('.tax-summary') !== null ||
+                        (element.textContent?.includes('Tax Summary') &&
+                         element.classList.contains('print-avoid-break'));
+
+  let tableName: string | undefined;
+  if (isTable || element.closest('table')) {
+    const tableEl = isTable ? element : element.closest('table');
+    tableName = tableEl?.getAttribute('data-table-name') || 'table';
+  }
+
+  return {
+    element,
+    height: getElementOuterHeight(element),
+    isTable,
+    isTableHeader,
+    isTableRow,
+    isTableFooter,
+    isTaxSummary,
+    tableName,
+  };
+};
+
+interface PageContainer {
+  container: HTMLElement;
+  elements: HTMLElement[];
+  height: number;
+  pageNumber: number;
 }
 
-const fitTextWithinSlot = (
-  pdf: any,
-  rawText: string,
-  maxWidth: number,
-  maxLines: number
-): FooterSlotResult => {
-  const normalizedText = (rawText ?? '').toString().replace(/\r\n/g, '\n');
-  const manualSegments = normalizedText.split('\n');
-  const hasContent = manualSegments.some((segment) => segment.trim().length > 0);
-
-  if (!hasContent || maxWidth <= 0 || maxLines <= 0) {
-    return { lines: [], fontSize: FOOTER_INITIAL_FONT_SIZE, truncated: false };
+const buildSmartPageContainers = (
+  wrapper: HTMLElement,
+  pageContentPx: number
+): PageContainer[] => {
+  if (!Number.isFinite(pageContentPx) || pageContentPx <= 0) {
+    throw new Error('Invalid page content height');
   }
 
-  const initialFontSize = pdf.getFontSize();
-  let fontSize = FOOTER_INITIAL_FONT_SIZE;
-  let lines: string[] = [];
-  let truncated = false;
-
-  const applySplit = (size: number) => {
-    pdf.setFontSize(size);
-    const lines: string[] = [];
-    manualSegments.forEach((segment, index) => {
-      const trimmed = segment.trim();
-      if (trimmed.length > 0) {
-        const splitLines = pdf.splitTextToSize(trimmed, maxWidth) as string[];
-        lines.push(...splitLines);
-      } else if (index !== manualSegments.length - 1) {
-        lines.push('');
-      }
-    });
-    while (lines.length && lines[lines.length - 1].trim().length === 0) {
-      lines.pop();
-    }
-    return lines.length ? lines : [''];
-  };
-
-  let attemptFontSize = fontSize;
-  while (attemptFontSize >= FOOTER_MIN_FONT_SIZE) {
-    lines = applySplit(attemptFontSize);
-    if (lines.length <= maxLines) {
-      fontSize = attemptFontSize;
-      break;
-    }
-    attemptFontSize = parseFloat((attemptFontSize - FOOTER_FONT_STEP).toFixed(2));
-    if (attemptFontSize < FOOTER_MIN_FONT_SIZE) {
-      attemptFontSize = FOOTER_MIN_FONT_SIZE;
-      lines = applySplit(attemptFontSize);
-      fontSize = attemptFontSize;
-      break;
-    }
-  }
-
-  if (lines.length > maxLines) {
-    truncated = true;
-    lines = truncateToMaxLines(lines, maxLines);
-    const ellipsis = '...';
-    const lastIndex = lines.length - 1;
-    let lastLine = lines[lastIndex];
-    if (!lastLine.endsWith(ellipsis)) {
-      lastLine = `${lastLine.trimEnd()}${ellipsis}`;
-    }
-    pdf.setFontSize(fontSize);
-    while (pdf.getTextWidth(lastLine) > maxWidth && lastLine.replace(ellipsis, '').length > 0) {
-      const withoutEllipsis = lastLine.endsWith(ellipsis)
-        ? lastLine.slice(0, -ellipsis.length)
-        : lastLine;
-      const shortened = withoutEllipsis.slice(0, Math.max(0, withoutEllipsis.length - 1)).trimEnd();
-      lastLine = `${shortened}${ellipsis}`;
-    }
-    lines[lastIndex] = lastLine;
-  } else {
-    fontSize = Math.max(Math.min(fontSize, FOOTER_INITIAL_FONT_SIZE), FOOTER_MIN_FONT_SIZE);
-  }
-
-  pdf.setFontSize(initialFontSize);
-  return { lines, fontSize, truncated };
-};
-
-/**
- * Draws a three-slot footer and the signature sentence on the given page.
- * Left: client/company (left-aligned)
- * Center: footerText (centered)
- * Right: date (top-right) + page number (bottom-right)
- *
- * This function draws the signature sentence AFTER watermark so it is always top-most.
- */
-// --- replace existing addFooter with this implementation ---
-const addFooter = (
-  pdf: any,
-  pageNumber: number,
-  totalPages: number,
-  pdfWidthMm: number,
-  pdfHeightMm: number,
-  footerText: string,
-  clientName: string,
-  dateStr: string
-): FooterLayoutInfo => {
-  pdf.setPage(pageNumber);
-  pdf.setFont('helvetica', 'normal');
-
-  // Layout / sizing
-  const paddingMm = FOOTER_PADDING_MM || 10;
-  const leftSlotRatio = 0.45;
-  const centerSlotRatio = 0.35;
-  const rightSlotRatio = 1 - leftSlotRatio - centerSlotRatio;
-  const leftWidth = Math.max(0, pdfWidthMm * leftSlotRatio - paddingMm * 2);
-  const centerWidth = Math.max(0, pdfWidthMm * centerSlotRatio - paddingMm * 2);
-  const rightWidth = Math.max(0, pdfWidthMm * rightSlotRatio - paddingMm * 2);
-
-  // Baselines (mm)
-  const mainBaseline = pdfHeightMm - 8; // main footer baseline
-  const signatureBaseline = pdfHeightMm - 12; // signature apron (still not used here)
-  const pageNumberBaseline = pdfHeightMm - 3; // page number bottom baseline
-
-  // Fit text for slots using fitTextWithinSlot helper
-  const leftResult = clientName
-    ? fitTextWithinSlot(pdf, clientName, leftWidth, FOOTER_MAX_LINES)
-    : { lines: [], fontSize: FOOTER_INITIAL_FONT_SIZE, truncated: false };
-
-  const centerResult = footerText
-    ? fitTextWithinSlot(pdf, footerText, centerWidth, FOOTER_MAX_LINES)
-    : { lines: [], fontSize: FOOTER_INITIAL_FONT_SIZE, truncated: false };
-
-  const dateResult = dateStr
-    ? fitTextWithinSlot(pdf, dateStr, rightWidth, 1)
-    : { lines: [], fontSize: FOOTER_INITIAL_FONT_SIZE, truncated: false };
-
-  // Draw left slot
-  if (leftResult.lines.length) {
-    pdf.setFontSize(leftResult.fontSize);
-    pdf.setTextColor(80, 80, 80);
-    // pdf.text accepts array for multiline
-    pdf.text(leftResult.lines, paddingMm, mainBaseline, { align: 'left' });
-  }
-
-  // Draw center slot (centered)
-  if (centerResult.lines.length) {
-    pdf.setFontSize(centerResult.fontSize);
-    pdf.setTextColor(80, 80, 80);
-    pdf.text(centerResult.lines, pdfWidthMm / 2, mainBaseline, { align: 'center' });
-  }
-
-  // Draw date (right-top)
-  if (dateResult.lines.length) {
-    pdf.setFontSize(dateResult.fontSize);
-    pdf.setTextColor(80, 80, 80);
-    pdf.text(dateResult.lines[0] ?? '', pdfWidthMm - paddingMm, mainBaseline, { align: 'right' });
-  }
-
-  // Draw page number last so it appears top-most
-  pdf.setFontSize(FOOTER_INITIAL_FONT_SIZE);
-  pdf.setTextColor(80, 80, 80);
-  pdf.text(`Page ${pageNumber} of ${totalPages}`, pdfWidthMm - paddingMm, pageNumberBaseline, {
-    align: 'right'
-  });
-
-  // Compute center line height for layout decisions
-  const centerLineCount = centerResult.lines.length || 0;
-  const centerLineHeight =
-    centerLineCount > 0 ? computeLineHeightMm(pdf, centerResult.fontSize) * centerLineCount : 0;
-
-  const layout: FooterLayoutInfo = {
-    hasCenterLines: centerLineCount > 0,
-    centerLineHeight,
-    mainBaseline,
-    pageNumberBaseline
-  };
-
-  return layout;
-};
-
-// --- replace existing drawFooterAndSignatureLine with this implementation ---
-const drawFooterAndSignatureLine = (
-  pdf: any,
-  pageNumber: number,
-  totalPages: number,
-  pdfWidthMm: number,
-  pdfHeightMm: number,
-  footerText: string,
-  clientName: string,
-  dateStr: string,
-  signatureFooterText: string
-) => {
-  // Draw main footer and retrieve layout info
-  const layout = addFooter(
-    pdf,
-    pageNumber,
-    totalPages,
-    pdfWidthMm,
-    pdfHeightMm,
-    footerText,
-    clientName,
-    dateStr
+  const children = Array.from(wrapper.children).filter(
+    (node): node is HTMLElement =>
+      node instanceof HTMLElement && !node.classList.contains('hide-for-pdf')
   );
 
-  if (!signatureFooterText) {
-    return;
+  if (!children.length) {
+    return [];
   }
 
-  const previousFontSize = pdf.getFontSize();
-  pdf.setPage(pageNumber);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(120, 120, 120);
-  const signatureFontSize = 8;
-  pdf.setFontSize(signatureFontSize);
-  const signatureLineHeight = computeLineHeightMm(pdf, signatureFontSize);
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const wrapperWidthPx = Math.ceil(wrapper.scrollWidth || wrapperRect.width);
 
-  // Fit signature text to available width (full page width minus padding)
-  const signatureMaxWidth = Math.max(0, pdfWidthMm - (FOOTER_PADDING_MM || 10) * 2);
-  const signatureLines = (pdf.splitTextToSize(signatureFooterText, signatureMaxWidth) as string[])
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  const createContainer = (pageNumber: number, isFirstPage: boolean): PageContainer => {
+    const clone = wrapper.cloneNode(false) as HTMLElement;
+    if (clone.id) clone.removeAttribute('id');
+    clone.innerHTML = '';
+    clone.style.height = 'auto';
+    clone.style.maxHeight = 'none';
+    clone.style.overflow = 'visible';
+    clone.style.boxSizing = 'border-box';
+    clone.style.border = 'none';
+    clone.style.boxShadow = 'none';
+    if (wrapperWidthPx > 0) {
+      clone.style.width = `${wrapperWidthPx}px`;
+    }
+    if (!isFirstPage && PAGE_TOP_PADDING_PX > 0) {
+      clone.style.paddingTop = `${PAGE_TOP_PADDING_PX}px`;
+    }
+    clone.dataset.pdfPageContainer = 'true';
 
-  if (signatureLines.length) {
-    const minStartY = pdfHeightMm - FOOTER_HEIGHT_MM + 1.5;
-    const maxStartY = layout.pageNumberBaseline - 1 - signatureLineHeight * (signatureLines.length - 1);
+    return {
+      container: clone,
+      elements: [],
+      height: isFirstPage ? 0 : PAGE_TOP_PADDING_PX,
+      pageNumber,
+    };
+  };
 
-    // If there's center footer content, attempt to place signature just below it, otherwise
-    // use the minimum start Y inside the reserved footer area.
-    const centerBaseline = layout.hasCenterLines ? layout.mainBaseline : minStartY;
-    const preferredGap = layout.hasCenterLines
-      ? Math.max(1.2, layout.centerLineHeight * 0.75)
-      : Math.max(1.2, signatureLineHeight * 0.75);
+  const containers: PageContainer[] = [];
+  let currentPage = createContainer(1, true);
+  let activeTable: { header: HTMLElement | null; rows: HTMLElement[]; footer: HTMLElement | null; name: string } | null = null;
 
-    let startY = centerBaseline + preferredGap;
+  const finalizePage = () => {
+    if (currentPage.elements.length > 0) {
+      currentPage.elements.forEach(el => currentPage.container.appendChild(el));
+      containers.push(currentPage);
+    }
+  };
 
-    if (maxStartY < minStartY) {
-      startY = maxStartY;
+  const startNewPage = () => {
+    finalizePage();
+    currentPage = createContainer(containers.length + 1, false);
+    currentPage.height = PAGE_TOP_PADDING_PX;
+  };
+
+  const canFitOnCurrentPage = (height: number): boolean => {
+    return currentPage.height + height <= pageContentPx + 1;
+  };
+
+  const addElementToPage = (element: HTMLElement, height: number) => {
+    const clone = element.cloneNode(true) as HTMLElement;
+    if (clone.id) clone.removeAttribute('id');
+    currentPage.elements.push(clone);
+    currentPage.height += height;
+  };
+
+  const flushTable = () => {
+    if (!activeTable) return;
+
+    const tableHeight =
+      (activeTable.header ? getElementOuterHeight(activeTable.header) : 0) +
+      activeTable.rows.reduce((sum, row) => sum + getElementOuterHeight(row), 0) +
+      (activeTable.footer ? getElementOuterHeight(activeTable.footer) : 0);
+
+    if (canFitOnCurrentPage(tableHeight)) {
+      if (activeTable.header) addElementToPage(activeTable.header, getElementOuterHeight(activeTable.header));
+      activeTable.rows.forEach(row => addElementToPage(row, getElementOuterHeight(row)));
+      if (activeTable.footer) addElementToPage(activeTable.footer, getElementOuterHeight(activeTable.footer));
     } else {
-      startY = Math.min(Math.max(startY, minStartY), maxStartY);
+      const headerHeight = activeTable.header ? getElementOuterHeight(activeTable.header) : 0;
+      const footerHeight = activeTable.footer ? getElementOuterHeight(activeTable.footer) : 0;
+
+      let rowBatch: HTMLElement[] = [];
+      let batchHeight = 0;
+
+      const flushBatch = (isLast: boolean) => {
+        if (rowBatch.length === 0) return;
+
+        const totalHeight = headerHeight + batchHeight + (isLast ? footerHeight : 0);
+
+        if (!canFitOnCurrentPage(totalHeight)) {
+          if (currentPage.elements.length > 0) {
+            startNewPage();
+          }
+        }
+
+        if (activeTable?.header) {
+          addElementToPage(activeTable.header, headerHeight);
+        }
+        rowBatch.forEach(row => addElementToPage(row, getElementOuterHeight(row)));
+        if (isLast && activeTable?.footer) {
+          addElementToPage(activeTable.footer, footerHeight);
+        }
+
+        rowBatch = [];
+        batchHeight = 0;
+
+        if (!isLast) {
+          startNewPage();
+        }
+      };
+
+      activeTable.rows.forEach((row, index) => {
+        const rowHeight = getElementOuterHeight(row);
+        const isLast = index === activeTable.rows.length - 1;
+        const nextTotalHeight = headerHeight + batchHeight + rowHeight + (isLast ? footerHeight : 0);
+
+        if (nextTotalHeight > pageContentPx && rowBatch.length > 0) {
+          flushBatch(false);
+        }
+
+        if (headerHeight + rowHeight + (isLast ? footerHeight : 0) > pageContentPx) {
+          throw new Error(`Table row too large to fit on a single page`);
+        }
+
+        rowBatch.push(row);
+        batchHeight += rowHeight;
+
+        if (isLast) {
+          flushBatch(true);
+        }
+      });
     }
 
-    pdf.text(signatureLines, pdfWidthMm / 2, startY, { align: 'center', baseline: 'alphabetic' });
+    activeTable = null;
+  };
+
+  for (const child of children) {
+    const info = analyzeElement(child);
+
+    if (info.isTable) {
+      if (activeTable) flushTable();
+
+      const tbody = child.querySelector('tbody');
+      const thead = child.querySelector('thead');
+      const tfoot = child.querySelector('tfoot');
+      const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
+
+      activeTable = {
+        header: thead as HTMLElement | null,
+        rows: rows as HTMLElement[],
+        footer: tfoot as HTMLElement | null,
+        name: info.tableName || 'table',
+      };
+      continue;
+    }
+
+    if (activeTable) flushTable();
+
+    if (info.isTaxSummary) {
+      if (!canFitOnCurrentPage(info.height)) {
+        startNewPage();
+        if (!canFitOnCurrentPage(info.height)) {
+          throw new Error('Tax Summary too large to fit on a single page');
+        }
+      }
+      addElementToPage(info.element, info.height);
+      continue;
+    }
+
+    if (info.height > pageContentPx) {
+      throw new Error(`Element too large to fit on a single page: ${info.height}px > ${pageContentPx}px`);
+    }
+
+    if (!canFitOnCurrentPage(info.height)) {
+      if (currentPage.elements.length > 0) {
+        startNewPage();
+      } else {
+        currentPage.container.style.paddingTop = '0px';
+        currentPage.height = 0;
+      }
+    }
+
+    addElementToPage(info.element, info.height);
   }
 
-  pdf.setFontSize(previousFontSize);
-  pdf.setTextColor(80, 80, 80);
+  if (activeTable) flushTable();
+  finalizePage();
+
+  return containers;
 };
 
+const capturePageContainers = async (
+  containers: PageContainer[],
+  html2canvasFactory: any,
+  baseOptions: Record<string, unknown>
+): Promise<HTMLCanvasElement[]> => {
+  if (!containers.length) return [];
 
-// --- Public: load CDN scripts for jspdf & html2canvas ---
+  const stagingRoot = document.createElement('div');
+  stagingRoot.style.position = 'fixed';
+  stagingRoot.style.left = '-10000px';
+  stagingRoot.style.top = '0';
+  stagingRoot.style.pointerEvents = 'none';
+  stagingRoot.style.opacity = '0';
+  stagingRoot.style.zIndex = '-1';
+  stagingRoot.style.background = '#ffffff';
+
+  containers.forEach((page, index) => {
+    page.container.dataset.pdfPageIndex = String(index);
+    page.container.style.boxSizing = 'border-box';
+    page.container.style.border = 'none';
+    page.container.style.boxShadow = 'none';
+    stagingRoot.appendChild(page.container);
+  });
+
+  document.body.appendChild(stagingRoot);
+  await waitForLayout();
+
+  const canvases: HTMLCanvasElement[] = [];
+  try {
+    for (const page of containers) {
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await html2canvasFactory(page.container, baseOptions);
+      } catch (err) {
+        console.warn('html2canvas page capture failed; retrying with relaxed CORS.', err);
+        canvas = await html2canvasFactory(page.container, {
+          ...baseOptions,
+          useCORS: false,
+          allowTaint: true,
+        });
+      }
+      canvases.push(canvas);
+    }
+  } finally {
+    stagingRoot.remove();
+  }
+
+  return canvases;
+};
+
+const computePageCanvasPx = (
+  canvasWidthPx: number,
+  contentHeightMm: number,
+  pdfWidthMm: number
+): number => Math.max(1, Math.round((contentHeightMm * canvasWidthPx) / pdfWidthMm));
+
+const renderElementToCanvas = async (
+  element: HTMLElement,
+  html2canvasFactory: any,
+  baseOptions: Record<string, unknown>
+): Promise<HTMLCanvasElement> => {
+  try {
+    return await html2canvasFactory(element, baseOptions);
+  } catch (firstErr) {
+    console.warn('html2canvas first attempt failed, retrying with allowTaint fallback.', firstErr);
+    try {
+      return await html2canvasFactory(element, {
+        ...baseOptions,
+        useCORS: false,
+        allowTaint: true,
+      });
+    } catch (secondErr) {
+      console.error('html2canvas failed on second attempt.', secondErr);
+      throw secondErr;
+    }
+  }
+};
+
+const detectRowBoundaries = (canvas: HTMLCanvasElement): number[] => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return [];
+
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const boundaries: number[] = [];
+
+  let lastWasWhite = true;
+  const threshold = 250;
+
+  for (let y = 0; y < canvas.height; y++) {
+    let whiteCount = 0;
+    for (let x = 0; x < canvas.width; x++) {
+      const idx = (y * canvas.width + x) * 4;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      if (r > threshold && g > threshold && b > threshold) {
+        whiteCount++;
+      }
+    }
+
+    const isWhiteRow = whiteCount > canvas.width * 0.95;
+
+    if (!lastWasWhite && isWhiteRow && y > 50) {
+      boundaries.push(y);
+    }
+
+    lastWasWhite = isWhiteRow;
+  }
+
+  return boundaries;
+};
+
+const sliceCanvasIntoPages = (
+  canvas: HTMLCanvasElement,
+  pageCanvasPx: number
+): HTMLCanvasElement[] => {
+  const slices: HTMLCanvasElement[] = [];
+  if (!canvas || pageCanvasPx <= 0) return slices;
+
+  const rowBoundaries = detectRowBoundaries(canvas);
+  const totalPages = Math.max(1, Math.ceil(canvas.height / pageCanvasPx));
+
+  for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+    let srcY = pageIndex * pageCanvasPx;
+    let nextSrcY = Math.min((pageIndex + 1) * pageCanvasPx, canvas.height);
+
+    const potentialBoundaries = rowBoundaries.filter(
+      boundary => boundary > srcY && boundary < nextSrcY && boundary < canvas.height
+    );
+
+    if (potentialBoundaries.length > 0) {
+      const closestBoundary = potentialBoundaries.reduce((prev, curr) =>
+        Math.abs(curr - nextSrcY) < Math.abs(prev - nextSrcY) ? curr : prev
+      );
+
+      if (Math.abs(closestBoundary - nextSrcY) < pageCanvasPx * 0.1) {
+        nextSrcY = closestBoundary;
+      }
+    }
+
+    const sliceHeight = Math.min(pageCanvasPx, Math.max(0, canvas.height - srcY));
+    const sliceCanvas = document.createElement('canvas');
+    sliceCanvas.width = canvas.width;
+    sliceCanvas.height = pageCanvasPx;
+    const ctx = sliceCanvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Unable to acquire 2D context for page slice.');
+    }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+
+    if (sliceHeight > 0) {
+      ctx.drawImage(
+        canvas,
+        0,
+        srcY,
+        canvas.width,
+        sliceHeight,
+        0,
+        0,
+        canvas.width,
+        sliceHeight
+      );
+    }
+
+    slices.push(sliceCanvas);
+  }
+
+  return slices;
+};
+
+const preComposeWatermarkOnCanvas = (
+  canvas: HTMLCanvasElement,
+  watermarkData: WatermarkData,
+  geometry: PageGeometry,
+  canvasScale: number
+): HTMLCanvasElement => {
+  const composedCanvas = document.createElement('canvas');
+  composedCanvas.width = canvas.width;
+  composedCanvas.height = canvas.height;
+  const ctx = composedCanvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, composedCanvas.width, composedCanvas.height);
+
+  const maxWidth = geometry.widthMm * WATERMARK_MAX_WIDTH_RATIO;
+  const maxHeight = geometry.contentHeightMm * WATERMARK_MAX_HEIGHT_RATIO;
+  let targetWidth = maxWidth;
+  let targetHeight = targetWidth * watermarkData.aspectRatio;
+
+  if (targetHeight > maxHeight) {
+    targetHeight = maxHeight;
+    targetWidth = targetHeight / watermarkData.aspectRatio;
+  }
+
+  const xMm = (geometry.widthMm - targetWidth) / 2;
+  const yMm = geometry.topMarginMm + (geometry.contentHeightMm - targetHeight) / 2;
+  const xPx = (xMm / geometry.widthMm) * composedCanvas.width;
+  const yPx = (yMm / geometry.heightMm) * composedCanvas.height;
+  const widthPx = (targetWidth / geometry.widthMm) * composedCanvas.width;
+  const heightPx = (targetHeight / geometry.heightMm) * composedCanvas.height;
+
+  const watermarkImg = new Image();
+  watermarkImg.src = watermarkData.dataUrl;
+
+  ctx.globalAlpha = WATERMARK_OPACITY;
+  ctx.drawImage(watermarkImg, xPx, yPx, widthPx, heightPx);
+  ctx.globalAlpha = 1.0;
+
+  ctx.drawImage(canvas, 0, 0);
+
+  return composedCanvas;
+};
+
 export const loadPdfScripts = async (
   onSuccess: () => void,
   onError: (msg: string) => void
@@ -815,7 +644,6 @@ export const loadPdfScripts = async (
   }
 };
 
-// --- Main exported function to generate PDF from a DOM node ---
 export const generatePdf = async (
   previewRef: RefObject<HTMLDivElement>,
   clientName: string,
@@ -839,110 +667,98 @@ export const generatePdf = async (
   }
 
   try {
-    // Ensure fonts and images are loaded
-    if ((document as any).fonts && (document as any).fonts.ready) {
-      await (document as any).fonts.ready;
-    }
+    await ensureFontsReady();
 
-    // --- OPTIMIZED HTML2CANVAS CONFIG ---
-    // We use scrollHeight to ensure the ENTIRE document is captured, 
-    // preventing the bottom from being cut off.
-    const canvas = await html2canvas(input, {
-      scale: 2, // High resolution
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      height: input.scrollHeight, // Capture full scrollable height
-      windowHeight: input.scrollHeight, // Ensure full window height is simulated
-      ignoreElements: (el: Element) => el.classList.contains('no-print-footer')
-    });
-
-    const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF('p', 'mm', 'a4');
-    
-    // --- PAGE GEOMETRY ---
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const MARGIN_TOP = 20;
-    const MARGIN_BOTTOM = 20;
-
-    // Page 1: Starts at 0 (No Top Margin), Ends at Bottom Margin
-    const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM;
-    // Other Pages: Starts at Top Margin, Ends at Bottom Margin
-    const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP - MARGIN_BOTTOM;
-
-    const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-    let pageNumber = 1;
-
-    // Preload watermark
-    const watermark = await preloadWatermark(logoSrc);
-
-    // --- HELPER: Footer & Masks ---
-    const addFooterAndMasks = (pageNum: number, isFirstPage: boolean) => {
-      pdf.setFillColor(255, 255, 255);
-      
-      // Mask Top Margin (Only for Page 2+)
-      if (!isFirstPage) {
-        pdf.rect(0, 0, pdfWidth, MARGIN_TOP, 'F');
-      }
-
-      // Mask Bottom Margin (For all pages)
-      pdf.rect(0, pdfHeight - MARGIN_BOTTOM, pdfWidth, MARGIN_BOTTOM, 'F');
-
-      // Add Footer Text
-      pdf.setFontSize(9);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(footerText, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-
-      // Add Watermark
-      try {
-        const contentHeight = isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS;
-        drawWatermark(pdf, watermark, pageNum, pdfWidth, contentHeight);
-      } catch (e) {}
+    const geometry: PageGeometry = {
+      widthMm: pdf.internal.pageSize.getWidth(),
+      heightMm: pdf.internal.pageSize.getHeight(),
+      contentHeightMm: pdf.internal.pageSize.getHeight() - 20,
+      topMarginMm: 0,
+      bottomMarginMm: 20,
     };
 
-    // --- PAGE 1 RENDER ---
-    // Draw at Y=0
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    addFooterAndMasks(pageNumber, true); // true = isFirstPage
+    const watermark = await preloadWatermark(logoSrc);
 
-    heightLeft -= CONTENT_HEIGHT_PAGE1;
-    position -= CONTENT_HEIGHT_PAGE1;
-    pageNumber++;
+    const tempWrapper = input.cloneNode(true) as HTMLElement;
+    tempWrapper.style.border = 'none';
+    tempWrapper.style.boxShadow = 'none';
+    tempWrapper.style.background = '#ffffff';
 
-    // --- SUBSEQUENT PAGES RENDER ---
-    while (heightLeft > 0) {
-      pdf.addPage();
-      
-      // Draw image shifted down by MARGIN_TOP to create the white space
-      pdf.addImage(imgData, 'PNG', 0, position + MARGIN_TOP, imgWidth, imgHeight);
-      
-      addFooterAndMasks(pageNumber, false); // false = not FirstPage
+    const hideElements = tempWrapper.querySelectorAll('.no-print-footer');
+    hideElements.forEach(el => {
+      (el as HTMLElement).style.display = 'none';
+    });
 
-      heightLeft -= CONTENT_HEIGHT_OTHERS;
-      position -= CONTENT_HEIGHT_OTHERS;
-      pageNumber++;
+    const html2canvasOptions = {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,
+      logging: false,
+      backgroundColor: '#ffffff',
+    };
+
+    let pageCanvases: HTMLCanvasElement[] = [];
+    let usedFallback = false;
+
+    try {
+      const scaleFactor = pdf.internal.scaleFactor || (72 / 25.4);
+      const pageContentPx = Math.round((geometry.contentHeightMm * scaleFactor * html2canvasOptions.scale) / (25.4 / 72));
+
+      console.log(`Attempting DOM-based page splitting with page height: ${pageContentPx}px`);
+
+      const pageContainers = buildSmartPageContainers(tempWrapper, pageContentPx);
+      console.log(`Successfully split into ${pageContainers.length} pages`);
+
+      pageCanvases = await capturePageContainers(pageContainers, html2canvas, html2canvasOptions);
+      console.log('DOM-based approach successful');
+    } catch (domError) {
+      console.warn('DOM-based splitting failed, falling back to image slicing:', domError);
+      usedFallback = true;
+
+      const fullCanvas = await renderElementToCanvas(tempWrapper, html2canvas, html2canvasOptions);
+      const pageCanvasPx = computePageCanvasPx(fullCanvas.width, geometry.contentHeightMm, geometry.widthMm);
+
+      console.log(`Slicing full canvas (${fullCanvas.height}px) into pages of ${pageCanvasPx}px`);
+      pageCanvases = sliceCanvasIntoPages(fullCanvas, pageCanvasPx);
+      console.log(`Image slicing produced ${pageCanvases.length} pages`);
     }
 
-    pdf.save(`${clientName || 'invoice'}-${date}.pdf`);
+    if (pageCanvases.length === 0) {
+      throw new Error('No page canvases generated');
+    }
 
+    for (let i = 0; i < pageCanvases.length; i++) {
+      if (i > 0) {
+        pdf.addPage();
+      }
+
+      const canvas = pageCanvases[i];
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = geometry.widthMm;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, geometry.topMarginMm, imgWidth, imgHeight, undefined, 'FAST');
+
+      drawWatermark(pdf, watermark, i + 1, geometry);
+
+      if (footerText) {
+        pdf.setPage(i + 1);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text(footerText, geometry.widthMm / 2, geometry.heightMm - 10, { align: 'center' });
+      }
+    }
+
+    const filename = sanitizeFilename(clientName, date);
+    pdf.save(filename);
+
+    console.log(`PDF generated successfully using ${usedFallback ? 'image slicing fallback' : 'DOM splitting'}`);
   } catch (err) {
     console.error('PDF generation error:', err);
-    onError('Could not generate PDF.');
+    onError('Could not generate PDF. Please try again.');
   }
 };
 
 export default generatePdf;
-
-// Manual verification checklist:
-// 1. Generate the provided sample PDF and confirm the electronic-signature footer appears verbatim on every page.
-// 2. Confirm long company/address lines stay clear of the page number in the footer.
-// 3. Verify table rows do not split across pages when exporting multi-page invoices.
-// 4. Check that signature and stamp blocks render wholly on a single page.
-// 5. Trigger a scenario with an oversized single element and confirm the console warns about the canvas-slice fallback.
-// 6. Confirm the watermark remains visible beneath content while the footer elements stay on top.
-// 7. Edit footer details in the UI and confirm both the live preview and generated PDF reflect the change.

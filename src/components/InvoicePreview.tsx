@@ -90,12 +90,9 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
   };
 
   return (
-    /* Top-level printable wrapper expected by pdfGenerator.ts */
     <div id="invoice-wrapper" ref={ref} className="invoice-root p-8 bg-white shadow-lg rounded-xl">
-      {/* Main printable area: keep as one page-break-group or add more inside templates as needed */}
       <div className="page-break-group">{renderTemplate()}</div>
 
-      {/* UI-only preview footer — hidden during PDF capture */}
       {footerLines.length > 0 && (
         <div className="no-print-footer mt-8 text-center text-xs text-gray-500">
           {footerLines.map((line: string, index: number) => (
