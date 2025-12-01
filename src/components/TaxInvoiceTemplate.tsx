@@ -153,7 +153,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const bankDetailsVisible = isSectionVisible(resolvedConfig, 'bankDetails', true);
 
   return (
-    <div className="border border-gray-400 bg-white p-6 font-sans text-xs text-gray-900">
+    <div className="bg-white font-sans text-xs text-gray-900">
       <style>{`
         @media print {
           .print-avoid-break { break-inside: avoid; }

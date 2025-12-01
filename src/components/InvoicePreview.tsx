@@ -90,8 +90,8 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
   };
 
   return (
-    <div id="invoice-wrapper" ref={ref} className="invoice-root p-8 bg-white shadow-lg rounded-xl">
-      <div className="page-break-group">{renderTemplate()}</div>
+    <div id="invoice-wrapper" ref={ref} className="invoice-root p-6 bg-white">
+      {renderTemplate()}
 
       {footerLines.length > 0 && (
         <div className="no-print-footer mt-8 text-center text-xs text-gray-500">

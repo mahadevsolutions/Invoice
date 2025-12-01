@@ -916,8 +916,8 @@ export default function App() {
                     <div className="lg:col-span-2 space-y-8">
                          <div>
                             <h2 className="text-2xl font-semibold mb-4">Live Preview</h2>
-                            <div className="overflow-x-auto">
-                                <div style={{width: '210mm'}}>
+                            <div className="overflow-x-auto bg-gray-200 p-4">
+                                <div style={{width: '210mm', margin: '0 auto'}} className="shadow-lg">
                                    {isFormPopulated ? <InvoicePreview ref={previewRef} data={previewData} /> : <div className="bg-white p-8 shadow-lg rounded-xl h-96 flex items-center justify-center text-gray-400">Preview will appear here...</div>}
                                 </div>
                             </div>
