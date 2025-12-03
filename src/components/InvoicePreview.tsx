@@ -31,10 +31,15 @@ interface InvoicePreviewProps {
 const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ data }, ref) => {
   const items = data?.items ?? [];
   const providedTemplate = (data?.template as string) || '';
-  // If provided template matches one of the known keys, use it, otherwise fall back.
-  const templateKey: VisualTemplateKey = (Object.keys(VISUAL_TEMPLATES).includes(providedTemplate)
-    ? (providedTemplate as VisualTemplateKey)
-    : 'TAX_INVOICE');
+  // Resolve template by key (e.g. 'PURCHASE_ORDER') or by value (e.g. 'Purchase Order Style').
+  const templateKeys = Object.keys(VISUAL_TEMPLATES) as VisualTemplateKey[];
+  let templateKey: VisualTemplateKey = 'TAX_INVOICE';
+  if (templateKeys.includes(providedTemplate as VisualTemplateKey)) {
+    templateKey = providedTemplate as VisualTemplateKey;
+  } else {
+    const match = templateKeys.find(k => VISUAL_TEMPLATES[k] === providedTemplate);
+    if (match) templateKey = match;
+  }
 
   const subtotal = items.reduce(
     (acc: number, item: any) => acc + (item?.cost || 0) * (item?.quantity || 1),

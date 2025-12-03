@@ -540,20 +540,41 @@ export default function App() {
         }
     };
     
+    // App.tsx - replace handleGeneratePdf with this
+
     const handleGeneratePdf = async () => {
         setIsGenerating(true);
-        
+
+        // If user provided custom footer lines use them; otherwise build fallback from company fields.
         const fallbackFooter = composeFooterDetails({
-            companyName,
-            companyAddress,
-            companyPhone,
-            companyEmail,
+            footerText: INVOICE_FOOTER_TEXT,
         });
         const footerLine = footerDetails && footerDetails.trim().length > 0 ? footerDetails : fallbackFooter;
-        
-        await generatePdf(previewRef, clientName, date, logoSrc, footerLine, (errorMsg) => showNotification(errorMsg, 'error'));
-        setIsGenerating(false);
+
+        try {
+            // Pass the whole previewData (invoice metadata) so pdfGenerator can render Invoice No and Billed To
+            const invoiceMeta = {
+                quotationNumber,
+                invoiceNumber: quotationNumber,
+                date,
+                clientName,
+                consigneeName,
+                companyName,
+                footerDetails: footerLine,
+                // include other fields if you want more precise footer rendering inside generator
+            };
+
+            // NOTE: generatePdf signature was updated to accept invoiceMeta + footerText + signatureImageUrl
+            await generatePdf(previewRef, invoiceMeta, logoSrc, footerLine, authorizedSignatureUrl || undefined, (errMsg: string) => {
+                showNotification(errMsg, 'error');
+            });
+        } catch (e) {
+            showNotification('Failed to generate PDF.', 'error');
+        } finally {
+            setIsGenerating(false);
+        }
     };
+
     
     const isButtonDisabled = isGenerating;
 

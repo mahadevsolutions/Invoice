@@ -8,6 +8,7 @@ interface Item {
     itemNumber: string;
     unit: string;
     hsn: string;
+    gstRate?: number;
 }
 
 interface InvoiceItemProps {
@@ -21,6 +22,7 @@ interface InvoiceItemProps {
 const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, removeItem, activeTemplateName }) => {
     const isQuotation = activeTemplateName === 'Quotation';
     const isPurchaseOrder = activeTemplateName === 'Purchase Order';
+    const isInvoice = activeTemplateName === 'Invoice';
 
     return (
         <div className="flex items-start space-x-2 mb-3 p-2 bg-gray-50 rounded-lg">
@@ -65,11 +67,13 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                     />
                 )}
-                {/* Only show HSN if it is NOT a Purchase Order */}
-                {isQuotation ? (
+                {/* HSN / Product Code / GST fields
+                    - Show Product Code (maps to itemNumber) for Purchase Order and Invoice (and Quotation).
+                    - For other templates show HSN/SAC field. */}
+                {(isPurchaseOrder || isInvoice || isQuotation) ? (
                     <input
                         type="text"
-                        placeholder="Product Code"
+                        placeholder=" HSN / Product Code"
                         value={item.itemNumber || item.hsn}
                         onChange={(e) => {
                             const value = e.target.value;
@@ -77,7 +81,7 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                         }}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                     />
-                ) : (!isPurchaseOrder && (
+                ) : (
                     <input
                         type="text"
                         placeholder="HSN/SAC"
@@ -85,7 +89,7 @@ const InvoiceItem: React.FC<InvoiceItemProps> = ({ item, index, updateItem, remo
                         onChange={(e) => updateItem(index, 'hsn', e.target.value)}
                         className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 transition"
                     />
-                ))}
+                )}
             </div>
             <button onClick={() => removeItem(index)} className="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition self-center">
                 &times;

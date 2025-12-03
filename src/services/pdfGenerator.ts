@@ -816,131 +816,249 @@ export const loadPdfScripts = async (
 };
 
 // --- Main exported function to generate PDF from a DOM node ---
+// Replace the existing generatePdf function with this implementation
+
+// --- replace your existing generatePdf with this implementation ---
 export const generatePdf = async (
   previewRef: RefObject<HTMLDivElement>,
-  clientName: string,
-  date: string,
-  logoSrc: string,
-  footerText: string,
+  invoiceMeta: any,            // object with invoice data (quotationNumber, date, clientName, footerDetails, ...)
+  logoSrc: string | undefined,
+  footerText: string | undefined,
+  signatureImageUrl: string | undefined,
   onError: (msg: string) => void
 ): Promise<void> => {
-  if (!window.jspdf || !window.html2canvas) {
-    onError('PDF libraries are not loaded.');
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const html2canvas = window.html2canvas;
-  const input = previewRef.current;
-
-  if (!input) {
-    onError('Preview element not found.');
-    return;
-  }
-
   try {
+    if (!window.jspdf || !window.html2canvas) {
+      onError('PDF libraries are not loaded.');
+      return;
+    }
+    const { jsPDF } = window.jspdf;
+    const html2canvas = window.html2canvas;
+    const input = previewRef.current;
+    if (!input) { onError('Preview element not found.'); return; }
+
+    // wait for fonts
     if ((document as any).fonts && (document as any).fonts.ready) {
       await (document as any).fonts.ready;
     }
 
-    // Row-aware pagination math
-    const inputWidthPx = input.offsetWidth;
-    const pxPerMm = inputWidthPx / 210; // A4 width
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    const PAGE_HEIGHT_MM = 297;
     const MARGIN_TOP_MM = 20;
     const MARGIN_BOTTOM_MM = 20;
 
-    const PAGE_1_CUT = (PAGE_HEIGHT_MM - MARGIN_BOTTOM_MM) * pxPerMm;
-    const SUBSEQUENT_PAGE_HEIGHT_PX = (PAGE_HEIGHT_MM - MARGIN_TOP_MM - MARGIN_BOTTOM_MM) * pxPerMm;
-
-    // Reset previous adjustments
-    const elements = Array.from(input.querySelectorAll('.avoid-break')) as HTMLElement[];
-    elements.forEach((el) => {
-      // reset any marginTop/paddingTop we may have set earlier
-      (el as HTMLElement).style.marginTop = '';
-      if (el.tagName === 'TR') {
-        const cells = Array.from(el.children) as HTMLElement[];
-        cells.forEach((td) => (td.style.paddingTop = ''));
-      }
+    // Reset previously applied layout shims (smart-break)
+    const avoidEls = Array.from(input.querySelectorAll('.avoid-break')) as HTMLElement[];
+    avoidEls.forEach((el) => {
+      el.style.marginTop = '';
+      if (el.tagName === 'TR') Array.from(el.children).forEach((td: any) => (td.style.paddingTop = ''));
     });
 
-    // --- SMART BREAK LOOP (Row-aware) ---
-    elements.forEach((el) => {
+    // convert px <-> mm approx using preview width aligned to A4 210mm
+    const pxPerMm = input.offsetWidth / 210;
+    const PAGE_1_CUT = (pdfHeight - MARGIN_BOTTOM_MM) * pxPerMm;
+    const SUBSEQUENT_PAGE_HEIGHT_PX = (pdfHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM) * pxPerMm;
+
+    // Smart-break: push down elements that cross cutlines
+    avoidEls.forEach((el) => {
       const rect = el.getBoundingClientRect();
       const containerRect = input.getBoundingClientRect();
       const relativeTop = rect.top - containerRect.top;
       const height = el.offsetHeight;
       const relativeBottom = relativeTop + height;
 
-      // Start with page 1 cut
       let cutLine = PAGE_1_CUT;
-      while (cutLine < relativeTop) {
-        cutLine += SUBSEQUENT_PAGE_HEIGHT_PX;
-      }
+      while (cutLine < relativeTop) cutLine += SUBSEQUENT_PAGE_HEIGHT_PX;
 
-      // If element crosses the cut line, push it down
       if (relativeTop < cutLine && relativeBottom > cutLine) {
-        const pushAmount = Math.ceil(cutLine - relativeTop) + 20; // buffer
-        console.debug(`Pushing ${el.tagName} down by ${pushAmount}px`);
-
+        const pushAmount = Math.ceil(cutLine - relativeTop) + 18; // buffer
         if (el.tagName === 'TR') {
-          const cells = Array.from(el.children) as HTMLElement[];
-          cells.forEach((td) => {
+          Array.from(el.children).forEach((td: any) => {
             const currentPadding = parseInt(window.getComputedStyle(td).paddingTop) || 0;
             td.style.paddingTop = `${currentPadding + pushAmount}px`;
           });
         } else {
-          (el as HTMLElement).style.marginTop = `${pushAmount}px`;
+          el.style.marginTop = `${pushAmount}px`;
         }
       }
     });
 
-    // Wait a moment for reflow
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    // small reflow
+    await new Promise((r) => setTimeout(r, 250));
 
-    // --- 3. CAPTURE DOCUMENT ---
+    // capture whole preview
     const canvas = await html2canvas(input, {
       scale: 2,
       useCORS: true,
       logging: false,
       height: input.scrollHeight,
       windowHeight: input.scrollHeight,
-      ignoreElements: (el: Element) => el.classList.contains('no-print-footer')
+      ignoreElements: (el: Element) => el.classList.contains('no-print-footer'),
     });
 
-    // --- Slicing & PDF Creation (unchanged) ---
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const MARGIN_TOP = 20;
-    const MARGIN_BOTTOM = 20;
-
-    const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM;
-    const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP - MARGIN_BOTTOM;
+    // compute page slices in mm-equivalent
+    const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM_MM;
+    const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
 
     const imgWidth = pdfWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    // total pages
+    const totalPages = Math.max(1, 1 + Math.ceil(Math.max(0, imgHeight - CONTENT_HEIGHT_PAGE1) / CONTENT_HEIGHT_OTHERS));
 
     let heightLeft = imgHeight;
     let position = 0;
     let pageNumber = 1;
 
-    const watermark = await preloadWatermark(logoSrc);
+    // fallback invoice metadata (safely pick values)
+    const invoiceNo = invoiceMeta?.quotationNumber || invoiceMeta?.invoiceNumber || '---';
+    const invoiceDate = invoiceMeta?.date || '---';
+    const billedTo = (invoiceMeta?.clientName || invoiceMeta?.consigneeName || '---');
+    const companyFooterText = footerText || invoiceMeta?.footerDetails || '';
 
-    const addFooterAndMasks = (pageNum: number, isFirstPage: boolean) => {
-      pdf.setFillColor(255, 255, 255);
-      if (!isFirstPage) pdf.rect(0, 0, pdfWidth, MARGIN_TOP, 'F');
-      pdf.rect(0, pdfHeight - MARGIN_BOTTOM, pdfWidth, MARGIN_BOTTOM, 'F');
-      pdf.setFontSize(9);
-      pdf.setTextColor(128, 128, 128);
-      pdf.text(footerText, pdfWidth / 2, pdfHeight - 10, { align: 'center' });
-      try { drawWatermark(pdf, watermark, pageNum, pdfWidth, isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS); } catch (e) {}
+    // helper to draw the *invoice-style* footer when signature is NOT provided
+    const drawInvoiceStyleFooter = (pdfDoc: any, pageNum: number) => {
+      // Measurements and fonts
+      const leftX = 14;
+      const topY = pdfHeight - MARGIN_BOTTOM_MM + 6;
+      const small = 8;
+      const metaSz = 9;
+      const noteSz = 7.5;
+
+      pdfDoc.setFontSize(metaSz);
+      pdfDoc.setTextColor(40);
+
+      // Invoice No
+      pdfDoc.setFont(undefined, 'bold');
+      pdfDoc.text('Invoice No', leftX, topY);
+      pdfDoc.setFont(undefined, 'normal');
+      pdfDoc.text(String(invoiceNo), leftX, topY + 4);
+
+      // Invoice Date
+      pdfDoc.setFont(undefined, 'bold');
+      pdfDoc.text('Invoice Date', leftX + 44, topY);
+      pdfDoc.setFont(undefined, 'normal');
+      pdfDoc.text(String(invoiceDate), leftX + 44, topY + 4);
+
+      // Billed To
+      pdfDoc.setFont(undefined, 'bold');
+      pdfDoc.text('Billed To', leftX + 92, topY);
+      pdfDoc.setFont(undefined, 'normal');
+      pdfDoc.text(String(billedTo), leftX + 92, topY + 4);
+
+      // Page number on right
+      pdfDoc.setFontSize(small);
+      const pageText = `Page ${pageNum} of ${totalPages}`;
+      const pageTextW = pdfDoc.getTextWidth(pageText);
+      pdfDoc.text(pageText, pdfWidth - 14 - pageTextW, topY + 4);
+
+      // Center: company footer text (multi-line, centered)
+      if (companyFooterText) {
+        pdfDoc.setFontSize(small);
+        pdfDoc.setFont(undefined, 'normal');
+        const maxCenterWidth = pdfWidth - 120;
+        const lines = pdfDoc.splitTextToSize(companyFooterText, maxCenterWidth);
+        const centerX = pdfWidth / 2;
+        let centerY = topY + 9; // slightly below metadata
+        lines.forEach((ln: string, i: number) => {
+          const w = pdfDoc.getTextWidth(ln);
+          pdfDoc.text(ln, centerX - w / 2, centerY + i * 4);
+        });
+      }
+
+      // The small centered note exactly like your template
+      pdfDoc.setFontSize(noteSz);
+      pdfDoc.setTextColor(120);
+      const note = 'This is an electronically generated document, no signature is required.';
+      const noteW = pdfDoc.getTextWidth(note);
+      pdfDoc.text(note, pdfWidth / 2 - noteW / 2, pdfHeight - 6);
     };
 
-    // Page 1
+    // Normal (compact) footer used when signature exists (keeps previous behaviour)
+    const drawNormalFooter = (pdfDoc: any, pageNum: number) => {
+      pdfDoc.setFontSize(8.5);
+      pdfDoc.setTextColor(80);
+    
+      const billedTo = invoiceMeta?.clientName || invoiceMeta?.consigneeName || '---';
+      const invoiceNo = invoiceMeta?.quotationNumber || invoiceMeta?.invoiceNumber || '---';
+      const centerText = companyFooterText || '';
+      const rightDate = invoiceDate || '';
+    
+      // LEFT SIDE (Invoice No + Billed To)
+      const leftX = 12;
+      const baseY = pdfHeight - 12;
+    
+      // Invoice No (label bold, value normal)
+      pdfDoc.setFont(undefined, 'bold');
+      pdfDoc.text('Invoice No: ', leftX, baseY);
+      const invLabelWidth = pdfDoc.getTextWidth('Invoice No: ');
+      pdfDoc.setFont(undefined, 'normal');
+      pdfDoc.text(String(invoiceNo), leftX + invLabelWidth, baseY);
+    
+      // Billed To (label bold, value normal)
+      const billedY = baseY + 4;
+      pdfDoc.setFont(undefined, 'bold');
+      pdfDoc.text('Billed To: ', leftX, billedY);
+      const billedLabelWidth = pdfDoc.getTextWidth('Billed To: ');
+      pdfDoc.setFont(undefined, 'normal');
+      pdfDoc.text(String(billedTo), leftX + billedLabelWidth, billedY);
+    
+      // CENTER FOOTER TEXT (company footer lines)
+      if (centerText) {
+        pdfDoc.setFontSize(8);
+        pdfDoc.setFont(undefined, 'normal');
+        const lines = pdfDoc.splitTextToSize(centerText, pdfWidth - 120);
+        const centerX = pdfWidth / 2;
+      
+        lines.forEach((ln: string, i: number) => {
+          const w = pdfDoc.getTextWidth(ln);
+          pdfDoc.text(ln, centerX - w / 2, pdfHeight - 12 + i * 4);
+        });
+      }
+    
+      // RIGHT SIDE (Date + Page number)
+      const pg = `Page ${pageNum} of ${totalPages}`;
+      const rightX = pdfWidth - 12;
+    
+      pdfDoc.setFont(undefined, 'normal');
+      // date
+      const dateW = pdfDoc.getTextWidth(rightDate);
+      pdfDoc.text(rightDate, rightX - dateW, baseY);
+    
+      // page number
+      const pgW = pdfDoc.getTextWidth(pg);
+      pdfDoc.text(pg, rightX - pgW, billedY);
+    };
+
+
+    // add per-page footer and clear margins
+    const addFooterAndMasks = (pageNum: number, isFirstPage: boolean) => {
+      // white-out top/bottom margins to ensure captured DOM doesn't overlap
+      pdf.setFillColor(255, 255, 255);
+      if (!isFirstPage) pdf.rect(0, 0, pdfWidth, MARGIN_TOP_MM, 'F');
+      pdf.rect(0, pdfHeight - MARGIN_BOTTOM_MM, pdfWidth, MARGIN_BOTTOM_MM, 'F');
+
+      // watermark hook (if you have a watermark implementation)
+      try {
+        // drawWatermark(pdf, ... ) // optional: plug your watermark helper
+      } catch (e) {
+        // ignore
+      }
+
+      // Decide which footer to draw
+      if (!signatureImageUrl) {
+        drawInvoiceStyleFooter(pdf, pageNum);
+      } else {
+        drawNormalFooter(pdf, pageNum);
+        // Optionally we could try to draw signatureImageUrl on the page here.
+      }
+    };
+
+    // Add first page image and footer
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
     addFooterAndMasks(pageNumber, true);
 
@@ -948,16 +1066,20 @@ export const generatePdf = async (
     position -= CONTENT_HEIGHT_PAGE1;
     pageNumber++;
 
+    // subsequent pages
     while (heightLeft > 0) {
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position + MARGIN_TOP, imgWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position + MARGIN_TOP_MM, imgWidth, imgHeight);
       addFooterAndMasks(pageNumber, false);
       heightLeft -= CONTENT_HEIGHT_OTHERS;
       position -= CONTENT_HEIGHT_OTHERS;
       pageNumber++;
     }
 
-    pdf.save(sanitizeFilename(clientName || 'invoice', date));
+    // save file
+    const safeName = ((invoiceMeta?.clientName || 'invoice').replace(/[^a-z0-9_\-\.]/gi, '_') +
+      (invoiceMeta?.date ? `_${invoiceMeta.date}` : '') + '.pdf');
+    pdf.save(safeName);
   } catch (err) {
     console.error('PDF generation error:', err);
     onError('Could not generate PDF.');

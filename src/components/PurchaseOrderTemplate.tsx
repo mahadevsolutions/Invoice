@@ -85,12 +85,12 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
 
             return (
                 <div className="space-y-1">
-                    <span className="block font-semibold text-gray-800">{String(title || '')}</span>
+                    <span className="block font-semibold text-black-800">{String(title || '')}</span>
                     {description ? (
-                        <span className="block text-[11px] text-gray-600">{description}</span>
+                        <span className="block text-[11px] text-black-600">{description}</span>
                     ) : null}
                     {hsnWithinCell ? (
-                        <span className="block text-[11px] text-gray-500">HSN/SAC: {hsnWithinCell}</span>
+                        <span className="block text-[11px] text-black-500">HSN/SAC: {hsnWithinCell}</span>
                     ) : null}
                 </div>
             );
@@ -123,55 +123,62 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
     const notesVisible = isSectionVisible(resolvedConfig, 'notes', true) && Boolean(purchaseData.notes);
 
     return (
-        <div className="bg-white text-sm text-gray-800">
+        <div className="bg-white p-6 font-sans text-xs text-black">
+            <style>{`
+              @media print {
+                .print-avoid-break { break-inside: avoid; }
+              }
+            `}</style>
+
             {headerVisible && (
-                <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-0">
                         {isFieldVisible(resolvedConfig, 'header', 'companyNameLabel') && (
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-black">
                                 {purchaseData.companyName || getFieldLabel(resolvedConfig, 'header', 'companyNameLabel', 'Company')}
                             </h1>
                         )}
                         {isFieldVisible(resolvedConfig, 'header', 'companyAddressLabel') && purchaseData.companyAddress ? (
-                            <p className="whitespace-pre-line text-gray-700">
+                            <p className="whitespace-pre-line text-black">
                                 {purchaseData.companyAddress}
                             </p>
                         ) : null}
-                        <div className="flex flex-wrap gap-x-3 text-gray-700">
-                            {isFieldVisible(resolvedConfig, 'header', 'companyEmailLabel') && purchaseData.companyEmail ? (
-                                <span>
-                                    <strong>{getFieldLabel(resolvedConfig, 'header', 'companyEmailLabel', 'Email')}:</strong>{''}
-                                    {purchaseData.companyEmail}
-                                </span>
-                            ) : null}
-                            {isFieldVisible(resolvedConfig, 'header', 'companyPhoneLabel') && purchaseData.companyPhone ? (
-                                <span>
-                                    <strong>{getFieldLabel(resolvedConfig, 'header', 'companyPhoneLabel', 'Phone')}:</strong>{' '}
-                                    {purchaseData.companyPhone}
-                                </span>
-                            ) : null}
+                        <div className="text-black font-medium">
+                          {isFieldVisible(resolvedConfig, 'header', 'companyEmailLabel') && purchaseData.companyEmail ? (
+                            <div>
+                              <strong>{getFieldLabel(resolvedConfig, 'header', 'companyEmailLabel', 'Email')}: </strong>
+                              <span className="font-normal">{purchaseData.companyEmail}</span>
+                            </div>
+                          ) : null}
+                        
+                          {isFieldVisible(resolvedConfig, 'header', 'companyPhoneLabel') && purchaseData.companyPhone ? (
+                            <div>
+                              <strong>{getFieldLabel(resolvedConfig, 'header', 'companyPhoneLabel', 'Phone')}: </strong>
+                              <span className="font-normal">{purchaseData.companyPhone}</span>
+                            </div>
+                          ) : null}
                         </div>
                     </div>
                     <div className="text-right">
                         {isFieldVisible(resolvedConfig, 'header', 'title') && (
-                            <h2 className="text-xl font-semibold text-gray-900">
+                            <h2 className="text-2xl font-semibold text-black">
                                 {getFieldLabel(resolvedConfig, 'header', 'title', 'PURCHASE ORDER')}
                             </h2>
                         )}
                         {isFieldVisible(resolvedConfig, 'header', 'projectSubjectLabel') && (
-                            <p className="text-gray-600">
-                                <strong>{getFieldLabel(resolvedConfig, 'header', 'projectSubjectLabel', 'Subject')}:</strong>{' '}
-                                {purchaseData.projectSubject || '---'}
+                            <p className="text-black-600">
+                                <strong>{getFieldLabel(resolvedConfig, 'header', '', '')}</strong>{' '}
+                                {purchaseData.projectSubject || ''}
                             </p>
                         )}
                         {isFieldVisible(resolvedConfig, 'header', 'poNumberLabel') && (
-                            <p className="font-semibold text-gray-700">
-                                {getFieldLabel(resolvedConfig, 'header', 'poNumberLabel', 'PO #')}: {purchaseData.quotationNumber || '---'}
+                            <p className="font-semibold text-black">
+                                {getFieldLabel(resolvedConfig, 'header', 'poNumberLabel', 'PO #')}: {purchaseData.quotationNumber || ''}
                             </p>
                         )}
                         {isFieldVisible(resolvedConfig, 'header', 'dateLabel') && (
-                            <p className="text-gray-600">
-                                {getFieldLabel(resolvedConfig, 'header', 'dateLabel', 'Date')}: {purchaseData.date || '---'}
+                            <p className="font-semibold text-black">
+                                {getFieldLabel(resolvedConfig, 'header', 'dateLabel', 'Date')}: {purchaseData.date || ''}
                             </p>
                         )}
                     </div>
@@ -179,23 +186,23 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             )}
 
             {(supplierVisible || shipToVisible) && (
-                <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="mb-6 grid grid-cols-2 gap-6 md:grid-cols-2 bg-orange-200 px-4 py-2 rounded">
                     {supplierVisible && (
                         <div className="space-y-0">
                             {isFieldVisible(resolvedConfig, 'supplier', 'heading') && (
-                                <h3 className="text-base font-bold text-gray-900">
+                                <h3 className="text-base font-bold text-black-900">
                                     {getFieldLabel(resolvedConfig, 'supplier', 'heading', 'Supplier')}
                                 </h3>
                             )}
-                            {purchaseData.clientName ? <p className="font-semibold text-gray-800">{purchaseData.clientName}</p> : null}
-                            {purchaseData.clientCompany ? <p className="text-gray-700">{purchaseData.clientCompany}</p> : null}
+                            {purchaseData.clientName ? <p className="font-semibold text-md text-black-800">{purchaseData.clientName}</p> : null}
+                            {purchaseData.clientCompany ? <p className="text-md text-black-700">{purchaseData.clientCompany}</p> : null}
                             {isFieldVisible(resolvedConfig, 'supplier', 'addressLabel') && purchaseData.clientAddress ? (
-                                <p className="whitespace-pre-line text-gray-700">
+                                <p className="whitespace-pre-line text-md text-black-700">
                                     {purchaseData.clientAddress}
                                 </p>
                             ) : null}
                             {isFieldVisible(resolvedConfig, 'supplier', 'contactLabel') && purchaseData.clientPhone ? (
-                                <p className="text-gray-700">
+                                <p className="text-md text-black-700">
                                     <strong>{getFieldLabel(resolvedConfig, 'supplier', 'contactLabel', 'Contact')}:</strong>{' '}
                                     {purchaseData.clientPhone}
                                 </p>
@@ -203,14 +210,14 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                         </div>
                     )}
                     {shipToVisible && (
-                        <div className="space-y-2">
+                        <div className="space-y-0">
                             {isFieldVisible(resolvedConfig, 'shipTo', 'heading') && (
-                                <h3 className="text-base font-bold text-gray-900">
+                                <h3 className="text-base  font-bold text-black-900">
                                     {getFieldLabel(resolvedConfig, 'shipTo', 'heading', 'Ship To')}
                                 </h3>
                             )}
                             {isFieldVisible(resolvedConfig, 'shipTo', 'addressLabel') && purchaseData.deliveryAddress ? (
-                                <p className="whitespace-pre-line text-gray-700">
+                                <p className="whitespace-pre-line text-md text-black-700">
                                     {purchaseData.deliveryAddress}
                                 </p>
                             ) : null}
@@ -242,14 +249,14 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             )}
 
             <section className="mb-6 print-avoid-break">
-                <div className="overflow-hidden rounded border border-gray-300">
+                <div className="overflow-hidden rounded border border-black-400">
                     <table className="w-full border-collapse text-left text-xs">
-                        <thead className="bg-gray-100 text-[11px] uppercase tracking-wide text-gray-600">
+                        <thead className="bg-black-200 uppercase tracking-wide text-bold text-solid black">
                             <tr>
                                 {tableColumns.map((column) => (
                                     <th
                                         key={column.key}
-                                        className="border-b border-gray-300 p-2"
+                                        className="text-center bg-violet-400 p-2"
                                         style={column.width ? { width: `${column.width}%` } : undefined}
                                     >
                                         {column.label}
@@ -260,20 +267,23 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                         <tbody>
                             {itemsWithCalculations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={tableColumns.length} className="p-4 text-center text-sm text-gray-500">
+                                    <td colSpan={tableColumns.length} className="p-4 text-center text-sm text-black-500">
                                         No items added.
                                     </td>
                                 </tr>
                             ) : (
                                 itemsWithCalculations.map((item: any, index: number) => (
-                                    <tr key={`${item.service}-${index}`} className="border-t border-gray-200">
+                                    <tr
+                                        key={`${item.service}-${index}`}
+                                        className={`avoid-break border-t border-black-200 ${index % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
+                                    >
                                         {tableColumns.map((column) => {
                                             const content = renderCell(item, column.key, column.formatter || 'text');
                                             const isNumeric = column.formatter === 'currency' || column.formatter === 'number';
                                             return (
                                                 <td
                                                     key={column.key}
-                                                    className={`${isNumeric ? 'text-right' : 'text-left'} align-top p-2`}
+                                                    className={'text-center align-top p-2'}
                                                 >
                                                     {content}
                                                 </td>
@@ -288,51 +298,63 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             </section>
 
             {totalsVisible && (
-                <div className="flex justify-end">
-                    <div className="w-72 text-sm">
-                        {isFieldVisible(resolvedConfig, 'totals', 'subtotalLabel') && (
-                            <div className="flex justify-between border-b border-gray-200 py-1 text-gray-700">
-                                <span>{getFieldLabel(resolvedConfig, 'totals', 'subtotalLabel', 'Subtotal')}</span>
-                                <span className="font-medium">{formatCurrency(subtotal)}</span>
-                            </div>
-                        )}
-                        {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
-                            <div className="flex justify-between border-b border-gray-200 py-1 text-gray-700">
-                                <span>{getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}</span>
-                                <span className="font-medium">{formatCurrency(totalIgst)}</span>
-                            </div>
-                        )}
-                        {gstType === 'CGST_SGST' && (
-                            <>
-                                {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
-                                    <div className="flex justify-between border-b border-gray-200 py-1 text-gray-700">
-                                        <span>{getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}</span>
-                                        <span className="font-medium">{formatCurrency(totalCgst)}</span>
-                                    </div>
-                                )}
-                                {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
-                                    <div className="flex justify-between border-b border-gray-200 py-1 text-gray-700">
-                                        <span>{getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}</span>
-                                        <span className="font-medium">{formatCurrency(totalSgst)}</span>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'totals', 'shippingLabel') && (
-                            <div className="flex justify-between border-b border-gray-200 py-1 text-gray-700">
-                                <span>{getFieldLabel(resolvedConfig, 'totals', 'shippingLabel', 'Shipping')}</span>
-                                <span className="font-medium">{formatCurrency(shipping)}</span>
-                            </div>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
-                            <div className="mt-2 flex justify-between border-t border-gray-300 py-2 text-base font-bold text-gray-900">
-                                <span>{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Total')}</span>
-                                <span>{formatCurrency(finalTotal)}</span>
-                            </div>
-                        )}
+          <div className="flex justify-end">
+            <div className="w-72 text-sm">
+              {/* Card wrapper */}
+              <div className="rounded border border-gray-200 overflow-hidden shadow-sm bg-white">
+            
+                {/* Content rows (uses divide to render lines between rows) */}
+                <div className="divide-y divide-gray-200">
+                  {isFieldVisible(resolvedConfig, 'totals', 'subtotalLabel') && (
+                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'subtotalLabel', 'Subtotal')}</span>
+                      <span className="font-medium">{formatCurrency(subtotal)}</span>
                     </div>
+                  )}
+
+                  {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
+                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}</span>
+                      <span className="font-medium">{formatCurrency(totalIgst)}</span>
+                    </div>
+                  )}
+
+                  {gstType === 'CGST_SGST' && (
+                    <>
+                      {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
+                        <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                          <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}</span>
+                          <span className="font-medium">{formatCurrency(totalCgst)}</span>
+                        </div>
+                      )}
+                      {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
+                        <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                          <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}</span>
+                          <span className="font-medium">{formatCurrency(totalSgst)}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {isFieldVisible(resolvedConfig, 'totals', 'shippingLabel') && (
+                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'shippingLabel', 'Shipping')}</span>
+                      <span className="font-medium">{formatCurrency(shipping)}</span>
+                    </div>
+                  )}
                 </div>
-            )}
+              
+                {/* Grand Total row */}
+                {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
+                  <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between text-white">
+                    <span className="text-sm font-semibold">{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Grand Total')}</span>
+                    <span className="text-sm font-bold">{formatCurrency(finalTotal)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
             <AuthorizedBy
                 signatureUrl={purchaseData.authorizedSignatureUrl}
@@ -343,7 +365,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             />
 
             {notesVisible && (
-                <div className="no-print-footer mt-6 text-xs text-gray-600">
+                <div className="no-print-footer mt-6 text-xs text-black-600">
                     <p>
                         <strong>{getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Notes')}:</strong>{' '}
                         {purchaseData.notes}

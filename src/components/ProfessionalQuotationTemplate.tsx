@@ -38,22 +38,28 @@ export function computeItemsWithTaxes(data: any) {
 }
 
 const numberToWords = (num: number): string => {
+  if (!Number.isFinite(num)) return 'ZERO RUPEES ONLY';
+  const n = Math.floor(Math.abs(num));
+
+  if (n === 0) return 'ZERO RUPEES ONLY';
+
   const a = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
   const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
 
-  const inWords = (n: number): string => {
-    if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
-    if (n < 1000) return a[Math.floor(n / 100)] + ' hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
-    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
-    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+  const inWords = (x: number): string => {
+    if (x < 20) return a[x];
+    if (x < 100) return b[Math.floor(x / 10)] + (x % 10 !== 0 ? ' ' + a[x % 10] : '');
+    if (x < 1000) return a[Math.floor(x / 100)] + ' hundred' + (x % 100 !== 0 ? ' and ' + inWords(x % 100) : '');
+    if (x < 100000) return inWords(Math.floor(x / 1000)) + ' thousand' + (x % 1000 !== 0 ? ' ' + inWords(x % 1000) : '');
+    if (x < 10000000) return inWords(Math.floor(x / 100000)) + ' lakh' + (x % 100000 !== 0 ? ' ' + inWords(x % 100000) : '');
     return 'number too large';
   };
 
-  const numStr = Math.floor(num).toString();
-  if (numStr.length > 7) return 'number too large';
-  const word = inWords(Math.floor(num));
-  return word.toUpperCase() + ' RUPEES ONLY';
+  // support up to crores if needed — staying consistent with previous limit
+  if (n >= 10000000) return 'NUMBER TOO LARGE';
+
+  const word = inWords(n);
+  return (word + ' rupees only').toUpperCase();
 };
 
 interface QuotationProps {
@@ -90,8 +96,9 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const logoSrc = invoiceData.logoSrc || 'https://placehold.co/150x50/000000/FFFFFF?text=MAHADEV';
   const { gstType, itemsWithCalculations, totals } = computeItemsWithTaxes(invoiceData);
   const { subtotal, totalCgst, totalSgst, totalIgst, grandTotal } = totals;
-  const totalTax = totalCgst + totalSgst + totalIgst;
+  const totalTax = (totalCgst || 0) + (totalSgst || 0) + (totalIgst || 0);
   const totalTaxInWords = numberToWords(totalTax);
+  const totalAmountInWords = numberToWords(grandTotal || 0);
 
   const tableColumns = useMemo(
     () =>
@@ -142,7 +149,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
 
       return (
         <div className="space-y-1">
-          <span className="block font-semibold text-gray-800">{String(title || '')}</span>
+          <span className="block font-bold text-gray-800">{String(title || '')}</span>
           {description ? (
             <span className="block text-[11px] text-gray-600">{description}</span>
           ) : null}
@@ -184,9 +191,15 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const notesSectionVisible = isSectionVisible(resolvedConfig, 'notes') && Boolean(invoiceData.notes);
 
   return (
-    <div className="bg-white p-8 font-sans text-xs text-gray-800">
+    <div className="bg-white p-6 font-sans text-xs text-black">
+      <style>{`
+        @media print {
+          .print-avoid-break { break-inside: avoid; }
+        }
+        .text-xxs { font-size: 0.65rem; }
+      `}</style>
       {headerVisible && (
-        <header className="mb-4 flex items-start justify-between pb-4">
+        <header className="mb-4 flex items-start justify-between pb-4 print-avoid-break">
           <div className="w-1/2 space-y-3">
             {headerTitleVisible && (
               <h1 className="text-3xl font-bold uppercase text-blue-700">
@@ -219,17 +232,17 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
         </header>
       )}
 
-      {(quotationFromVisible || quotationForVisible) && (
-        <section className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+      {(quotationFromVisible) && (
+        <section className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-2 bg-green-200 p-4 rounded-lg">
           {quotationFromVisible && (
             <div>
-              <h3 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold uppercase">
+              <h3 className="mb-2 border-b border-gray-600 pb-1 text-sm font-bold uppercase">
                 {getSectionLabel(resolvedConfig, 'quotationFrom', 'Quotation From')}
               </h3>
-              <p className="text-base font-bold text-gray-900">{invoiceData.companyName || '---'}</p>
+              <p className="text-base font-bold text-black">{invoiceData.companyName || '---'}</p>
               {isFieldVisible(resolvedConfig, 'quotationFrom', 'addressLabel') && invoiceData.companyAddress ? (
                 <p className="mt-1 whitespace-pre-line">
-                  <span className="font-semibold text-gray-700">
+                  <span className="font-semibold text-black">
                     {getFieldLabel(resolvedConfig, 'quotationFrom', 'addressLabel', 'Address')}:
                   </span>
                   {'\n'}
@@ -239,32 +252,32 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
               {isFieldVisible(resolvedConfig, 'quotationFrom', 'emailLabel') && (
                 <p className="mt-1">
                   <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'emailLabel', 'Email')}:</strong>{' '}
-                  {invoiceData.companyEmail || '---'}
+                  {invoiceData.companyEmail || ''}
                 </p>
               )}
               {isFieldVisible(resolvedConfig, 'quotationFrom', 'phoneLabel') && (
                 <p className="mt-1">
                   <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'phoneLabel', 'Phone')}:</strong>{' '}
-                  {invoiceData.companyPhone || '---'}
+                  {invoiceData.companyPhone || ''}
                 </p>
               )}
               {isFieldVisible(resolvedConfig, 'quotationFrom', 'gstinLabel') && (
                 <p className="mt-1">
                   <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'gstinLabel', 'GSTIN')}:</strong>{' '}
-                  {invoiceData.companyGstin || '---'}
+                  {invoiceData.companyGstin || ''}
                 </p>
               )}
               {isFieldVisible(resolvedConfig, 'quotationFrom', 'panLabel') && (
                 <p className="mt-1">
                   <strong>{getFieldLabel(resolvedConfig, 'quotationFrom', 'panLabel', 'PAN')}:</strong>{' '}
-                  {invoiceData.companyPan || '---'}
+                  {invoiceData.companyPan || ''}
                 </p>
               )}
             </div>
           )}
           {quotationForVisible && (
             <div>
-              <h3 className="mb-2 border-b border-gray-300 pb-1 text-sm font-bold uppercase">
+              <h3 className="mb-2 border-b border-gray-600 pb-1 text-sm font-bold uppercase">
                 {getSectionLabel(resolvedConfig, 'quotationFor', 'Quotation For')}
               </h3>
               <p className="text-base font-bold text-gray-900">{invoiceData.clientName || '---'}</p>
@@ -309,12 +322,12 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       <section className="print-avoid-break">
         <div className="overflow-hidden rounded border border-gray-300">
           <table className="w-full border-collapse text-left text-xs">
-            <thead className="bg-gray-100 text-[11px] uppercase tracking-wide text-gray-800">
+            <thead className="bg-gray-200 uppercase tracking-wide font-bold text-black">
               <tr>
                 {tableColumns.map((column) => (
                   <th
                     key={column.key}
-                    className={`border border-gray-300 p-2 font-bold text-gray-900 ${getColumnAlignment(column)}`}
+                    className="text-center bg-violet-400 p-2"
                     style={column.width ? { width: `${column.width}%` } : undefined}
                   >
                     {column.label}
@@ -331,14 +344,17 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
                 </tr>
               ) : (
                 itemsWithCalculations.map((item: any, rowIndex: number) => (
-                  <tr key={`${item.service}-${rowIndex}`} className="border-t border-gray-200">
+                  <tr
+                    key={`${item.service}-${rowIndex}`}
+                    className={`avoid-break border-t border-black-200 ${rowIndex % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
+                  >
                     {tableColumns.map((column) => {
                       const content = renderCell(item, column.key, column.formatter || 'text');
                       const alignment = getColumnAlignment(column);
                       return (
                         <td
                           key={column.key}
-                          className={`align-top p-2 ${alignment} border border-gray-200 ${column.key === 'service' || column.key === 'description' ? 'leading-relaxed' : ''}`}
+                          className={'text-center align-top p-2'}
                         >
                           {content}
                         </td>
@@ -350,78 +366,77 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
             </tbody>
           </table>
         </div>
-
-        {itemsSummaryVisible && isFieldVisible(resolvedConfig, 'itemsSummary', 'totalTaxInWordsLabel') && (
-          <div className="border border-t-0 border-gray-300 p-2 text-right font-semibold text-gray-700">
-            {getFieldLabel(resolvedConfig, 'itemsSummary', 'totalTaxInWordsLabel', 'Total Tax In Words')}
-            {': '}
-            {totalTaxInWords}
-          </div>
-        )}
       </section>
 
-      {totalsSectionVisible && (
-        <section className="mt-4 flex justify-end print-avoid-break">
-          <div className="w-full max-w-md">
-            <table className="w-full text-sm">
-              <tbody>
-                {isFieldVisible(resolvedConfig, 'totals', 'amountLabel') && (
-                  <tr>
-                    <td className="p-2 text-gray-700">
-                      {getFieldLabel(resolvedConfig, 'totals', 'amountLabel', 'Amount')}
-                    </td>
-                    <td className="p-2 text-right font-medium">{formatCurrency(subtotal)}</td>
-                  </tr>
-                )}
-                {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
-                  <tr>
-                    <td className="p-2 text-gray-700">
-                      {getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}
-                    </td>
-                    <td className="p-2 text-right font-medium">{formatCurrency(totalIgst)}</td>
-                  </tr>
-                )}
-                {gstType === 'CGST_SGST' && (
-                  <>
-                    {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
-                      <tr>
-                        <td className="p-2 text-gray-700">
-                          {getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}
-                        </td>
-                        <td className="p-2 text-right font-medium">{formatCurrency(totalCgst)}</td>
-                      </tr>
-                    )}
-                    {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
-                      <tr>
-                        <td className="p-2 text-gray-700">
-                          {getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}
-                        </td>
-                        <td className="p-2 text-right font-medium">{formatCurrency(totalSgst)}</td>
-                      </tr>
-                    )}
-                  </>
-                )}
-                {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
-                  <tr className="bg-gray-100 text-base font-semibold text-gray-900">
-                    <td className="p-3">
-                      {getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Total (INR)')}
-                    </td>
-                    <td className="p-3 text-right">{formatCurrency(grandTotal)}</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+    {totalsSectionVisible && (
+      <section className="mt-4 flex justify-end print-avoid-break">
+        <div className="w-72 text-sm">
+          {/* Card wrapper - same compact layout as Purchase Order */}
+          <div className="rounded border border-gray-200 overflow-hidden shadow-sm bg-white">
+            {/* Content rows (uses divide to render lines between rows) */}
+            <div className="divide-y divide-gray-200">
+              {isFieldVisible(resolvedConfig, 'totals', 'amountLabel') && (
+                <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                  <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'amountLabel', 'Amount')}</span>
+                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                </div>
+              )}
 
-      <AuthorizedBy
-        signatureUrl={invoiceData.authorizedSignatureUrl}
-        personName={invoiceData.authorizedPersonName}
-        align="right"
-        label={resolvedConfig.authorizedBy?.label}
-        visible={resolvedConfig.authorizedBy?.visible !== false}
-      />
+              {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
+                <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                  <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}</span>
+                  <span className="font-medium">{formatCurrency(totalIgst)}</span>
+                </div>
+              )}
+
+              {gstType === 'CGST_SGST' && (
+                <>
+                  {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
+                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}</span>
+                      <span className="font-medium">{formatCurrency(totalCgst)}</span>
+                    </div>
+                  )}
+                  {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
+                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}</span>
+                      <span className="font-medium">{formatCurrency(totalSgst)}</span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {isFieldVisible(resolvedConfig, 'totals', 'totalTaxLabel') && (
+                <div className="flex items-center justify-between px-4 py-2 text-gray-700">
+                  <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'totalTaxLabel', 'Total Tax')}</span>
+                  <span className="font-medium">{formatCurrency(totalTax)}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Grand Total row */}
+            {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
+              <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between text-white">
+                <span className="text-sm font-semibold">{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Total (INR)')}</span>
+                <span className="text-sm font-bold">{formatCurrency(grandTotal)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
+
+
+
+      <div className="mt-6">
+        <AuthorizedBy
+          signatureUrl={invoiceData.authorizedSignatureUrl}
+          personName={invoiceData.authorizedPersonName}
+          align="right"
+          label={resolvedConfig.authorizedBy?.label}
+          visible={resolvedConfig.authorizedBy?.visible !== false}
+        />
+      </div>
 
       {notesSectionVisible && (
         <section className="mt-8 print-avoid-break">
