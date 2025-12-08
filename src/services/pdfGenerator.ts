@@ -904,6 +904,9 @@ export const generatePdf = async (
     const CONTENT_HEIGHT_PAGE1 = pdfHeight - MARGIN_BOTTOM_MM;
     const CONTENT_HEIGHT_OTHERS = pdfHeight - MARGIN_TOP_MM - MARGIN_BOTTOM_MM;
 
+    // Preload watermark (company logo) if provided
+    const watermark = await preloadWatermark(logoSrc);
+
     const imgWidth = pdfWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
@@ -1044,7 +1047,11 @@ export const generatePdf = async (
 
       // watermark hook (if you have a watermark implementation)
       try {
-        // drawWatermark(pdf, ... ) // optional: plug your watermark helper
+        // draw watermark beneath content so footers stay on top
+        if (watermark) {
+          const contentH = isFirstPage ? CONTENT_HEIGHT_PAGE1 : CONTENT_HEIGHT_OTHERS;
+          drawWatermark(pdf, watermark, pageNum, pdfWidth, contentH);
+        }
       } catch (e) {
         // ignore
       }
