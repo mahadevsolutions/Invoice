@@ -133,6 +133,11 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         label: 'New Field',
         visible: true,
         order: section.fields.length,
+        type: 'text',
+        placeholder: '',
+        defaultValue: '',
+        options: [],
+        validation: {},
       });
     });
   };
@@ -263,6 +268,134 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   className="w-full rounded border border-gray-300 px-3 py-1 text-sm text-gray-800 focus:border-blue-500 focus:outline-none md:w-1/2"
                   aria-label={`Section label for ${section.id}`}
                 />
+                <div className="flex items-center gap-2">
+                  <details className="text-xs">
+                    <summary className="cursor-pointer text-gray-600">Style</summary>
+                    <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3 text-xs">
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">Font</span>
+                        <select
+                          value={section.style?.fontFamily ?? 'sans'}
+                          onChange={(e) =>
+                            updateSection(section.id, (target) => {
+                              target.style = { ...(target.style || {}), fontFamily: e.target.value as any };
+                            })
+                          }
+                          className="flex-1 rounded border border-gray-300 px-2 py-1"
+                        >
+                          <option value="sans">Sans</option>
+                          <option value="serif">Serif</option>
+                          <option value="mono">Mono</option>
+                        </select>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">Size</span>
+                        <select
+                          value={section.style?.fontSize ?? 'base'}
+                          onChange={(e) =>
+                            updateSection(section.id, (target) => {
+                              target.style = { ...(target.style || {}), fontSize: e.target.value as any };
+                            })
+                          }
+                          className="flex-1 rounded border border-gray-300 px-2 py-1"
+                        >
+                          <option value="xs">XS</option>
+                          <option value="sm">SM</option>
+                          <option value="base">Base</option>
+                          <option value="lg">LG</option>
+                          <option value="xl">XL</option>
+                        </select>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">Align</span>
+                        <select
+                          value={section.style?.align ?? 'left'}
+                          onChange={(e) =>
+                            updateSection(section.id, (target) => {
+                              target.style = { ...(target.style || {}), align: e.target.value as any };
+                            })
+                          }
+                          className="flex-1 rounded border border-gray-300 px-2 py-1"
+                        >
+                          <option value="left">Left</option>
+                          <option value="center">Center</option>
+                          <option value="right">Right</option>
+                        </select>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">Color</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="color"
+                            value={section.style?.textColor && String(section.style.textColor).startsWith('#') ? String(section.style.textColor) : '#000000'}
+                            onChange={(e) =>
+                              updateSection(section.id, (target) => {
+                                target.style = { ...(target.style || {}), textColor: e.target.value };
+                              })
+                            }
+                            className="w-10 h-8 p-0 border rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="text-gray-700 or #333"
+                            value={section.style?.textColor ?? ''}
+                            onChange={(e) =>
+                              updateSection(section.id, (target) => {
+                                target.style = { ...(target.style || {}), textColor: e.target.value };
+                              })
+                            }
+                            className="flex-1 rounded border border-gray-300 px-2 py-1"
+                          />
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">BG</span>
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="color"
+                            value={section.style?.bgColor && String(section.style.bgColor).startsWith('#') ? String(section.style.bgColor) : '#ffffff'}
+                            onChange={(e) =>
+                              updateSection(section.id, (target) => {
+                                target.style = { ...(target.style || {}), bgColor: e.target.value };
+                              })
+                            }
+                            className="w-10 h-8 p-0 border rounded"
+                          />
+                          <input
+                            type="text"
+                            placeholder="bg-white or #fff"
+                            value={section.style?.bgColor ?? ''}
+                            onChange={(e) =>
+                              updateSection(section.id, (target) => {
+                                target.style = { ...(target.style || {}), bgColor: e.target.value };
+                              })
+                            }
+                            className="flex-1 rounded border border-gray-300 px-2 py-1"
+                          />
+                        </div>
+                      </label>
+
+                      <label className="flex items-center gap-2">
+                        <span className="w-20">Padding</span>
+                        <input
+                          type="text"
+                          placeholder="p-2 or py-1"
+                          value={section.style?.padding ?? ''}
+                          onChange={(e) =>
+                            updateSection(section.id, (target) => {
+                              target.style = { ...(target.style || {}), padding: e.target.value };
+                            })
+                          }
+                          className="flex-1 rounded border border-gray-300 px-2 py-1"
+                        />
+                      </label>
+                    </div>
+                  </details>
+                </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
                   <label className="flex items-center gap-1">
                     <input
@@ -401,6 +534,243 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                             className="flex-1 rounded border border-gray-300 px-2 py-1"
                           />
                         </label>
+                        <details className="mt-2 text-xs">
+                          <summary className="cursor-pointer text-gray-600">Style</summary>
+                          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3 text-xs text-gray-600">
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Font</span>
+                              <select
+                                value={field.style?.fontFamily ?? 'sans'}
+                                onChange={(e) =>
+                                  updateField(section.id, field.key, (target) => {
+                                    target.style = { ...(target.style || {}), fontFamily: e.target.value as any };
+                                  })
+                                }
+                                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                              >
+                                <option value="sans">Sans</option>
+                                <option value="serif">Serif</option>
+                                <option value="mono">Mono</option>
+                              </select>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Size</span>
+                              <select
+                                value={field.style?.fontSize ?? 'base'}
+                                onChange={(e) =>
+                                  updateField(section.id, field.key, (target) => {
+                                    target.style = { ...(target.style || {}), fontSize: e.target.value as any };
+                                  })
+                                }
+                                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                              >
+                                <option value="xs">XS</option>
+                                <option value="sm">SM</option>
+                                <option value="base">Base</option>
+                                <option value="lg">LG</option>
+                                <option value="xl">XL</option>
+                              </select>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Align</span>
+                              <select
+                                value={field.style?.align ?? 'left'}
+                                onChange={(e) =>
+                                  updateField(section.id, field.key, (target) => {
+                                    target.style = { ...(target.style || {}), align: e.target.value as any };
+                                  })
+                                }
+                                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                              >
+                                <option value="left">Left</option>
+                                <option value="center">Center</option>
+                                <option value="right">Right</option>
+                              </select>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Text</span>
+                              <div className="flex items-center gap-2 flex-1">
+                                <input
+                                  type="color"
+                                  value={field.style?.textColor && String(field.style.textColor).startsWith('#') ? String(field.style.textColor) : '#000000'}
+                                  onChange={(e) =>
+                                    updateField(section.id, field.key, (target) => {
+                                      target.style = { ...(target.style || {}), textColor: e.target.value };
+                                    })
+                                  }
+                                  className="w-10 h-8 p-0 border rounded"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="text-gray-700 or #333"
+                                  value={field.style?.textColor ?? ''}
+                                  onChange={(e) =>
+                                    updateField(section.id, field.key, (target) => {
+                                      target.style = { ...(target.style || {}), textColor: e.target.value };
+                                    })
+                                  }
+                                  className="flex-1 rounded border border-gray-300 px-2 py-1"
+                                />
+                              </div>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">BG</span>
+                              <div className="flex items-center gap-2 flex-1">
+                                <input
+                                  type="color"
+                                  value={field.style?.bgColor && String(field.style.bgColor).startsWith('#') ? String(field.style.bgColor) : '#ffffff'}
+                                  onChange={(e) =>
+                                    updateField(section.id, field.key, (target) => {
+                                      target.style = { ...(target.style || {}), bgColor: e.target.value };
+                                    })
+                                  }
+                                  className="w-10 h-8 p-0 border rounded"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="bg-white or #fff"
+                                  value={field.style?.bgColor ?? ''}
+                                  onChange={(e) =>
+                                    updateField(section.id, field.key, (target) => {
+                                      target.style = { ...(target.style || {}), bgColor: e.target.value };
+                                    })
+                                  }
+                                  className="flex-1 rounded border border-gray-300 px-2 py-1"
+                                />
+                              </div>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Padding</span>
+                              <input
+                                type="text"
+                                placeholder="p-1 or py-1"
+                                value={field.style?.padding ?? ''}
+                                onChange={(e) =>
+                                  updateField(section.id, field.key, (target) => {
+                                    target.style = { ...(target.style || {}), padding: e.target.value };
+                                  })
+                                }
+                                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                              />
+                            </label>
+                          </div>
+                        </details>
+                        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                          <label className="flex items-center gap-2">
+                            <span className="w-20">Type</span>
+                            <select
+                              value={field.type || 'text'}
+                              onChange={(e) =>
+                                updateField(section.id, field.key, (target) => {
+                                  target.type = e.target.value as any;
+                                })
+                              }
+                              className="flex-1 rounded border border-gray-300 px-2 py-1"
+                            >
+                              <option value="text">Text</option>
+                              <option value="number">Number</option>
+                              <option value="date">Date</option>
+                              <option value="textarea">Textarea</option>
+                              <option value="select">Select</option>
+                              <option value="currency">Currency</option>
+                              <option value="checkbox">Checkbox</option>
+                            </select>
+                          </label>
+
+                          <label className="flex items-center gap-2">
+                            <span className="w-20">Placeholder</span>
+                            <input
+                              type="text"
+                              value={field.placeholder || ''}
+                              onChange={(e) =>
+                                updateField(section.id, field.key, (target) => {
+                                  target.placeholder = e.target.value;
+                                })
+                              }
+                              className="flex-1 rounded border border-gray-300 px-2 py-1"
+                            />
+                          </label>
+                        </div>
+
+                        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+                          <label className="flex items-center gap-2">
+                          
+                          </label>
+
+                          {/* Select options (comma separated) */}
+                          {field.type === 'select' && (
+                            <label className="flex items-center gap-2">
+                              <span className="w-20">Options</span>
+                              <input
+                                type="text"
+                                value={(field.options || []).join(',')}
+                                onChange={(e) =>
+                                  updateField(section.id, field.key, (target) => {
+                                    const parts = e.target.value
+                                      .split(',')
+                                      .map((p) => p.trim())
+                                      .filter(Boolean);
+                                    target.options = parts;
+                                  })
+                                }
+                                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                                placeholder="a,b,c"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3 text-xs text-gray-600">
+                          <label className="flex items-center gap-2">
+                            <span className="w-20">Pattern</span>
+                            <input
+                              type="text"
+                              value={field.validation?.pattern || ''}
+                              onChange={(e) =>
+                                updateField(section.id, field.key, (target) => {
+                                  target.validation = { ...(target.validation || {}), pattern: e.target.value };
+                                })
+                              }
+                              className="flex-1 rounded border border-gray-300 px-2 py-1"
+                              placeholder="e.g. ^[A-Za-z0-9 ]+$"
+                            />
+                          </label>
+
+                          <label className="flex items-center gap-2">
+                            <span className="w-20">Min</span>
+                            <input
+                              type="number"
+                              value={field.validation?.min ?? ''}
+                              onChange={(e) =>
+                                updateField(section.id, field.key, (target) => {
+                                  const v = e.target.value === '' ? undefined : Number(e.target.value);
+                                  target.validation = { ...(target.validation || {}), min: v };
+                                })
+                              }
+                              className="flex-1 rounded border border-gray-300 px-2 py-1"
+                            />
+                          </label>
+
+                          <label className="flex items-center gap-2">
+                            <span className="w-20">Max</span>
+                            <input
+                              type="number"
+                              value={field.validation?.max ?? ''}
+                              onChange={(e) =>
+                                updateField(section.id, field.key, (target) => {
+                                  const v = e.target.value === '' ? undefined : Number(e.target.value);
+                                  target.validation = { ...(target.validation || {}), max: v };
+                                })
+                              }
+                              className="flex-1 rounded border border-gray-300 px-2 py-1"
+                            />
+                          </label>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -582,6 +952,106 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               className="flex-1 rounded border border-gray-300 px-2 py-1"
             />
           </label>
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-xs uppercase tracking-wide text-gray-500">Signature URL</span>
+              <input
+                type="text"
+                value={config.authorizedBy?.signatureUrl ?? ''}
+                onChange={(e) =>
+                  updateConfig((next) => {
+                    if (!next.authorizedBy) next.authorizedBy = { visible: true, label: 'Authorized By' } as any;
+                    next.authorizedBy.signatureUrl = e.target.value || undefined;
+                  })
+                }
+                className="flex-1 rounded border border-gray-300 px-2 py-1"
+                placeholder="https://... or data:image/..."
+              />
+            </label>
+
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-xs uppercase tracking-wide text-gray-500">Upload</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    updateConfig((next) => {
+                      if (!next.authorizedBy) next.authorizedBy = { visible: true, label: 'Authorized By' } as any;
+                      next.authorizedBy.signatureUrl = String(reader.result || '');
+                    });
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+            </label>
+          </div>
+
+          <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-2">
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-xs uppercase tracking-wide text-gray-500">Name</span>
+              <input
+                type="text"
+                value={config.authorizedBy?.personName ?? ''}
+                onChange={(e) =>
+                  updateConfig((next) => {
+                    if (!next.authorizedBy) next.authorizedBy = { visible: true, label: 'Authorized By' } as any;
+                    next.authorizedBy.personName = e.target.value || undefined;
+                  })
+                }
+                className="flex-1 rounded border border-gray-300 px-2 py-1"
+              />
+            </label>
+
+            <label className="flex items-center gap-2">
+              <span className="w-24 text-xs uppercase tracking-wide text-gray-500">Designation</span>
+              <input
+                type="text"
+                value={config.authorizedBy?.designation ?? ''}
+                onChange={(e) =>
+                  updateConfig((next) => {
+                    if (!next.authorizedBy) next.authorizedBy = { visible: true, label: 'Authorized By' } as any;
+                    next.authorizedBy.designation = e.target.value || undefined;
+                  })
+                }
+                className="flex-1 rounded border border-gray-300 px-2 py-1"
+              />
+            </label>
+          </div>
+
+          <div className="mt-2 flex items-center gap-2">
+            <span className="w-24 text-xs uppercase tracking-wide text-gray-500">Align</span>
+            <select
+              value={config.authorizedBy?.align ?? 'right'}
+              onChange={(e) =>
+                updateConfig((next) => {
+                  if (!next.authorizedBy) next.authorizedBy = { visible: true, label: 'Authorized By' } as any;
+                  next.authorizedBy.align = e.target.value as any;
+                })
+              }
+              className="rounded border border-gray-300 px-2 py-1"
+            >
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+            </select>
+
+            <button
+              type="button"
+              className="ml-4 rounded border border-red-300 px-2 py-1 text-red-600"
+              onClick={() =>
+                updateConfig((next) => {
+                  if (!next.authorizedBy) return;
+                  next.authorizedBy.signatureUrl = undefined;
+                })
+              }
+            >
+              Remove Signature
+            </button>
+          </div>
         </div>
       </section>
     </div>

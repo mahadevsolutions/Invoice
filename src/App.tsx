@@ -11,6 +11,7 @@ import {
     createProfessionalQuotationDefaultConfig,
     createPurchaseOrderDefaultConfig,
     createTaxInvoiceDefaultConfig,
+    getOrderedFields,
 } from './components/template-editor/field-types';
 import { loadConfig, saveConfig } from './utils/templateConfigStorage';
 
@@ -335,6 +336,7 @@ export default function App() {
     const [logoSrc, setLogoSrc] = useState(defaultLogoUrl);
     const [authorizedSignatureUrl, setAuthorizedSignatureUrl] = useState<string | null>(null);
     const [authorizedPersonName, setAuthorizedPersonName] = useState('');
+    const [authorizedDesignation, setAuthorizedDesignation] = useState('');
     const [items, setItems] = useState<Item[]>([]);
     const [notes, setNotes] = useState('');
     const [footerDetails, setFooterDetails] = useState('');
@@ -348,6 +350,9 @@ export default function App() {
     const [isFormPopulated, setIsFormPopulated] = useState(false);
 
     const previewRef = useRef<HTMLDivElement>(null);
+
+    // Single source of truth for all form data that Preview & PDF read from
+    const [invoiceData, setInvoiceData] = useState<any>({});
 
     const showNotification = (message: string, type = 'error') => {
         setNotification({ message, type });
@@ -386,25 +391,23 @@ export default function App() {
     }, [template]);
 
     // --- Form Handlers ---
-    const addItem = () => setItems([...items, { ...initialItem }]);
-    
+    const addItem = () => setInvoiceData((prev: any) => ({ ...(prev || {}), items: [ ...(prev?.items || []), { ...initialItem } ] }));
+
     const updateItem = (index: number, field: keyof Item, value: any, extraFields?: Partial<Item>) => {
-        const newItems = [...items];
-        newItems[index] = {
-            ...newItems[index],
-            [field]: value,
-            ...(extraFields || {}),
-        };
-        setItems(newItems);
+        setInvoiceData((prev: any) => {
+            const items = [...(prev?.items || [])];
+            items[index] = { ...(items[index] || {}), [field]: value, ...(extraFields || {}) };
+            return { ...(prev || {}), items };
+        });
     };
-    
-    const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
+
+    const removeItem = (index: number) => setInvoiceData((prev: any) => ({ ...(prev || {}), items: (prev?.items || []).filter((_: any, i: number) => i !== index) }));
 
     const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => setLogoSrc(reader.result as string);
+            reader.onloadend = () => setInvoiceData((prev: any) => ({ ...(prev || {}), logoSrc: reader.result as string }));
             reader.readAsDataURL(file);
         }
     };
@@ -413,42 +416,13 @@ export default function App() {
         const file = event.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => setAuthorizedSignatureUrl(reader.result as string);
+            reader.onloadend = () => setInvoiceData((prev: any) => ({ ...(prev || {}), authorizedSignatureUrl: reader.result as string }));
             reader.readAsDataURL(file);
         }
     };
     
     const resetForm = () => {
-        setCompanyName(''); setCompanyAddress(''); setCompanyEmail(''); setCompanyPhone('');
-        setClientName(''); setClientCompany(''); setClientAddress('');
-        setProjectSubject(''); setDate(getCurrentDate()); setQuotationNumber('');
-        setItems([]); setNotes(''); setInvoiceTitle(''); setLogoSrc(defaultLogoUrl);
-        setAuthorizedSignatureUrl(null); setAuthorizedPersonName('');
-        setFooterDetails('');
-        // Clear Purchase Order related fields
-        setDeliveryAddress(''); setDeliveryDate(getCurrentDate()); setRequisitioner('');
-        setShipVia(''); setFob(''); setShippingCost(0);
-        // Clear tax ID fields
-        setCompanyGstin(''); setCompanyPan('');
-        setClientGstin(''); setClientPan('');
-        setClientState('');
-        setClientContactPerson('');
-        setClientPhone('');
-
-        // Clear gst type
-        setGstType('CGST/SGST');
-        setGlobalTaxRate(18);
-        // Clear company bank
-        setCompanyBankName(''); setCompanyAccountNo(''); setCompanyBankBranch('');
-        // Clear consignee (ship-to)
-        setConsigneeName(''); setConsigneeAddress(''); setConsigneeGstin(''); setConsigneeState('');
-        setConsigneeContactPerson(''); setConsigneeContact('');
-        // Clear dispatch/delivery
-        setDeliveryNote(''); setBuyersOrderNo(''); setDispatchDocNo(''); setDispatchedThrough('');
-        setDestination(''); setTermsOfDelivery('');
-        // Clear totals/footer
-        setRoundOff(0); setDeclaration('We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.');
-        setActiveTemplateName('');
+        setInvoiceData({});
         setTemplate(Object.values(VISUAL_TEMPLATES)[0]);
         setIsFormPopulated(false);
     };
@@ -462,32 +436,11 @@ export default function App() {
             companyPhone: templateData.companyPhone,
             companyEmail: templateData.companyEmail,
         });
-        setCompanyName(templateData.companyName);
-        setCompanyAddress(templateData.companyAddress);
-        setCompanyEmail(templateData.companyEmail);
-        setCompanyPhone(templateData.companyPhone);
-        setClientName(templateData.clientName);
-        setClientCompany(templateData.clientCompany);
-        setClientAddress(templateData.clientAddress);
-        setClientPhone(templateData.clientPhone || '');
-        setClientGstin(templateData.clientGstin || '');
-        setClientPan(templateData.clientPan || '');
-        setClientState(templateData.clientState || '');
-        setClientContactPerson(templateData.clientContactPerson || '');
-        setProjectSubject(templateData.projectSubject);
-        setDate(templateData.date);
-        setQuotationNumber(templateData.quotationNumber);
-        setInvoiceTitle(templateData.invoiceTitle);
-        setItems((templateData.items || []).map((item: any) => ({...item}))); // Deep copy
-        setNotes(templateData.notes);
-        setFooterDetails(footerText || '');
-        setTemplate(templateData.template);
+        const normalized = { ...(templateData || {}) };
+        normalized.footerDetails = footerText || normalized.footerDetails || '';
+        setInvoiceData(normalized);
+        setTemplate(normalized.template || templateData.template || Object.values(VISUAL_TEMPLATES)[0]);
         setActiveTemplateName(name);
-        setLogoSrc(templateData.logoSrc);
-        setAuthorizedSignatureUrl(templateData.authorizedSignatureUrl || null);
-        setAuthorizedPersonName(templateData.authorizedPersonName || '');
-        setGstType(templateData.gstType || 'CGST/SGST');
-        setGlobalTaxRate(templateData.globalTaxRate || 18);
         setIsFormPopulated(true);
         showNotification(`${name || 'Template'} loaded!`, 'success');
     };
@@ -499,26 +452,37 @@ export default function App() {
     const activeTemplateConfig = resolvedTemplateKey ? templateConfigs[resolvedTemplateKey] : undefined;
     const activeTemplateEditor = resolvedTemplateKey ? TEMPLATE_EDITOR_MAP[resolvedTemplateKey] : undefined;
 
-    const previewData = { 
-        companyName, companyAddress, companyEmail, companyPhone, clientName, clientCompany, clientAddress, projectSubject, date, quotationNumber, items, notes, template, invoiceTitle, logoSrc,
-        authorizedSignatureUrl,
-        authorizedPersonName: authorizedPersonName.trim() || null,
-        // PO fields
-        deliveryAddress, deliveryDate, requisitioner, shipVia, fob, shippingCost,
-        activeTemplateName,
-        // tax ids & client contact
-        companyGstin, companyPan, clientGstin, clientPan, clientState, clientContactPerson, clientPhone,
-        // company bank
-        companyBankName, companyAccountNo, companyBankBranch,
-        // consignee (ship-to)
-        consigneeName, consigneeAddress, consigneeGstin, consigneeState, consigneeContactPerson, consigneeContact,
-        // dispatch/delivery
-        deliveryNote, buyersOrderNo, dispatchDocNo, dispatchedThrough, destination, termsOfDelivery,
-        // totals/footer
-        roundOff, declaration, footerDetails,
-        gstType,
-        globalTaxRate,
-        templateConfig: activeTemplateConfig,
+    // Use single source of truth for preview data
+    const previewData = { ...(invoiceData || {}), templateConfig: activeTemplateConfig } as any;
+
+    // Build effective preview data that includes defaultValue from template config
+    const effectivePreviewData = { ...previewData } as any;
+    const fieldMap: Record<string, any> = {};
+    if (activeTemplateConfig) {
+        const sectionIds = Object.keys(activeTemplateConfig.sections || {});
+        sectionIds.forEach((sid) => {
+            const fields = getOrderedFields(activeTemplateConfig, sid as any) || [];
+            fields.forEach((f: any) => {
+                fieldMap[f.key] = f;
+                if (effectivePreviewData[f.key] == null && f.defaultValue !== undefined) {
+                    // coerce checkbox default to boolean
+                    if (f.type === 'checkbox') {
+                        const dv = f.defaultValue;
+                        effectivePreviewData[f.key] = dv === true || dv === 'true';
+                    } else if (f.type === 'number' || f.type === 'currency') {
+                        const num = Number(f.defaultValue);
+                        effectivePreviewData[f.key] = Number.isFinite(num) ? num : f.defaultValue;
+                    } else {
+                        effectivePreviewData[f.key] = f.defaultValue;
+                    }
+                }
+            });
+        });
+    }
+
+    const getPlaceholderForKey = (key: string, fallback?: string) => {
+        const f = fieldMap[key];
+        return (f && f.placeholder) || fallback || '';
     };
 
     // --- Main Logic Handlers --- (no database writes)
@@ -549,23 +513,22 @@ export default function App() {
         const fallbackFooter = composeFooterDetails({
             footerText: INVOICE_FOOTER_TEXT,
         });
-        const footerLine = footerDetails && footerDetails.trim().length > 0 ? footerDetails : fallbackFooter;
+        const footerLine = (invoiceData.footerDetails && String(invoiceData.footerDetails).trim().length > 0) ? invoiceData.footerDetails : fallbackFooter;
 
         try {
             // Pass the whole previewData (invoice metadata) so pdfGenerator can render Invoice No and Billed To
             const invoiceMeta = {
-                quotationNumber,
-                invoiceNumber: quotationNumber,
-                date,
-                clientName,
-                consigneeName,
-                companyName,
+                quotationNumber: invoiceData?.quotationNumber,
+                invoiceNumber: invoiceData?.quotationNumber,
+                date: invoiceData?.date,
+                clientName: invoiceData?.clientName,
+                consigneeName: invoiceData?.consigneeName,
+                companyName: invoiceData?.companyName,
                 footerDetails: footerLine,
-                // include other fields if you want more precise footer rendering inside generator
             };
 
             // NOTE: generatePdf signature was updated to accept invoiceMeta + footerText + signatureImageUrl
-            await generatePdf(previewRef, invoiceMeta, logoSrc, footerLine, authorizedSignatureUrl || undefined, (errMsg: string) => {
+            await generatePdf(previewRef, invoiceMeta, invoiceData?.logoSrc || logoSrc, footerLine, invoiceData?.authorizedSignatureUrl || undefined, (errMsg: string) => {
                 showNotification(errMsg, 'error');
             });
         } catch (e) {
@@ -649,30 +612,37 @@ export default function App() {
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder="Authorized Person Name"
-                                            value={authorizedPersonName}
-                                            onChange={e => setAuthorizedPersonName(e.target.value)}
+                                            placeholder={getPlaceholderForKey('authorizedPersonName', 'Authorized Person Name')}
+                                            value={invoiceData.authorizedPersonName || ''}
+                                            onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), authorizedPersonName: e.target.value }))}
                                             className="w-full p-2 border rounded-md"
                                         />
+                                        <input
+                                            type="text"
+                                            placeholder={getPlaceholderForKey('authorizedDesignation', 'Designation')}
+                                            value={invoiceData.authorizedDesignation || ''}
+                                            onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), authorizedDesignation: e.target.value }))}
+                                            className="w-full p-2 border rounded-md mt-2"
+                                        />
                                     </div>
-                                    <input type="text" placeholder="Company Name" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <textarea placeholder="Company Address" value={companyAddress} onChange={e => setCompanyAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
-                                    <input type="email" placeholder="Company Email" value={companyEmail} onChange={e => setCompanyEmail(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <input type="tel" placeholder="Company Phone" value={companyPhone} onChange={e => setCompanyPhone(e.target.value)} className="w-full p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('companyName', 'Company Name')} value={invoiceData.companyName || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyName: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                            <textarea placeholder={getPlaceholderForKey('companyAddress', 'Company Address')} value={invoiceData.companyAddress || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyAddress: e.target.value }))} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                            <input type="email" placeholder={getPlaceholderForKey('companyEmail', 'Company Email')} value={invoiceData.companyEmail || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyEmail: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                            <input type="tel" placeholder={getPlaceholderForKey('companyPhone', 'Company Phone')} value={invoiceData.companyPhone || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyPhone: e.target.value }))} className="w-full p-2 border rounded-md" />
                                     {(activeTemplateName === 'Quotation') && (
                                         <div className="flex space-x-2 mt-2">
                                             <input 
-                                                type="text" 
-                                                placeholder="Company GSTIN" 
-                                                value={companyGstin} 
-                                                onChange={e => setCompanyGstin(e.target.value)} 
+                                                   type="text" 
+                                                   placeholder={getPlaceholderForKey('companyGstin', 'Company GSTIN')}
+                                                value={invoiceData.companyGstin || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyGstin: e.target.value }))} 
                                                 className="w-1/2 p-2 border rounded-md" 
                                             />
                                             <input 
                                                 type="text" 
                                                 placeholder="Company PAN" 
-                                                value={companyPan} 
-                                                onChange={e => setCompanyPan(e.target.value)} 
+                                                value={invoiceData.companyPan || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyPan: e.target.value }))} 
                                                 className="w-1/2 p-2 border rounded-md" 
                                             />
                                         </div>
@@ -680,10 +650,10 @@ export default function App() {
                                     {(activeTemplateName === 'Invoice') && (
                                         <div className="flex space-x-2 mt-2">
                                             <input 
-                                                type="text" 
-                                                placeholder="Company GSTIN" 
-                                                value={companyGstin} 
-                                                onChange={e => setCompanyGstin(e.target.value)} 
+                                                   type="text" 
+                                                   placeholder={getPlaceholderForKey('companyGstin', 'Company GSTIN')}
+                                                value={invoiceData.companyGstin || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyGstin: e.target.value }))} 
                                                 className="w-full p-2 border rounded-md" 
                                             />
                                         </div>
@@ -693,62 +663,62 @@ export default function App() {
                                     {activeTemplateName === 'Invoice' && (
                                         <>
                                             <h4 className="font-semibold text-md pt-2">Bank Details</h4>
-                                            <input type="text" placeholder="Bank Name" value={companyBankName} onChange={e => setCompanyBankName(e.target.value)} className="w-full p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('companyBankName', 'Bank Name')} value={invoiceData.companyBankName || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyBankName: e.target.value }))} className="w-full p-2 border rounded-md" />
                                             <div className="flex space-x-2">
-                                                <input type="text" placeholder="Account No." value={companyAccountNo} onChange={e => setCompanyAccountNo(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                                <input type="text" placeholder="Branch & IFS Code" value={companyBankBranch} onChange={e => setCompanyBankBranch(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                                <input type="text" placeholder={getPlaceholderForKey('companyAccountNo', 'Account No.')} value={invoiceData.companyAccountNo || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyAccountNo: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
+                                                <input type="text" placeholder={getPlaceholderForKey('companyBankBranch', 'Branch & IFS Code')} value={invoiceData.companyBankBranch || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), companyBankBranch: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
                                             </div>
 
-                                            <textarea placeholder="Declaration" value={declaration} onChange={e => setDeclaration(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+                                            <textarea placeholder="Declaration" value={invoiceData.declaration || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), declaration: e.target.value }))} className="w-full p-3 border rounded-md" rows={3}></textarea>
                                         </>
                                     )}
                                 </div>
 
                                 <div className="space-y-4 mb-6">
                                     <h3 className="font-semibold text-lg border-b pb-2">{activeTemplateName === 'Purchase Order' ? 'Vendor / Supplier Details' : activeTemplateName === 'Quotation' ? 'Billed To' : activeTemplateName === 'Invoice' ? 'Buyer (Bill-to) Details' : 'Client Details'}</h3>
-                                    <input type="text" placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Name' : 'Client Name'} value={clientName} onChange={e => setClientName(e.target.value)} className="w-full p-2 border rounded-md" />
+                                    <input type="text" placeholder={getPlaceholderForKey('clientName', activeTemplateName === 'Purchase Order' ? 'Supplier Name' : 'Client Name')} value={invoiceData.clientName || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientName: e.target.value }))} className="w-full p-2 border rounded-md" />
                                     {/* Hide Client Company for Invoice */}
                                     {activeTemplateName !== 'Invoice' && (
                                         <input 
                                             type="text" 
-                                            placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Company (Optional)' : 'Client Company (Optional)'} 
-                                            value={clientCompany} 
-                                            onChange={e => setClientCompany(e.target.value)} 
+                                            placeholder={getPlaceholderForKey('clientCompany', activeTemplateName === 'Purchase Order' ? 'Supplier Company (Optional)' : 'Client Company (Optional)')} 
+                                            value={invoiceData.clientCompany || ''} 
+                                            onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientCompany: e.target.value }))} 
                                             className="w-full p-2 border rounded-md" 
                                         />
                                     )}
-                                    <textarea placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Address' : 'Client Address'} value={clientAddress} onChange={e => setClientAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                    <textarea placeholder={getPlaceholderForKey('clientAddress', activeTemplateName === 'Purchase Order' ? 'Supplier Address' : 'Client Address')} value={invoiceData.clientAddress || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientAddress: e.target.value }))} className="w-full p-2 border rounded-md" rows={2}></textarea>
                                     {/* Show extra Buyer fields ONLY for Invoice */}
                                     {activeTemplateName === 'Invoice' && (
                                         <>
                                             <input 
                                                 type="text" 
-                                                placeholder="Client GSTIN/UIN" 
-                                                value={clientGstin} 
-                                                onChange={e => setClientGstin(e.target.value)} 
+                                                placeholder={getPlaceholderForKey('clientGstin', 'Client GSTIN/UIN')}
+                                                value={invoiceData.clientGstin || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientGstin: e.target.value }))} 
                                                 className="w-full p-2 border rounded-md" 
                                             />
                                             <input 
                                                 type="text" 
-                                                placeholder="Client State (e.g., Telangana, Code: 36)" 
-                                                value={clientState} 
-                                                onChange={e => setClientState(e.target.value)} 
+                                                placeholder={getPlaceholderForKey('clientState', 'Client State (e.g., Telangana, Code: 36)')}
+                                                value={invoiceData.clientState || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientState: e.target.value }))} 
                                                 className="w-full p-2 border rounded-md" 
                                             />
                                             <input 
                                                 type="text" 
-                                                placeholder="Client Contact Person" 
-                                                value={clientContactPerson} 
-                                                onChange={e => setClientContactPerson(e.target.value)} 
+                                                placeholder={getPlaceholderForKey('clientContactPerson', 'Client Contact Person')}
+                                                value={invoiceData.clientContactPerson || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientContactPerson: e.target.value }))} 
                                                 className="w-1/2 p-2 border rounded-md" 
                                             />
                                         </>
                                     )}
-                                    <input 
+                                        <input 
                                         type="tel" 
-                                        placeholder={activeTemplateName === 'Purchase Order' ? 'Supplier Phone' : 'Client Phone'} 
-                                        value={clientPhone} 
-                                        onChange={e => setClientPhone(e.target.value)} 
+                                        placeholder={getPlaceholderForKey('clientPhone', activeTemplateName === 'Purchase Order' ? 'Supplier Phone' : 'Client Phone')}
+                                        value={invoiceData.clientPhone || ''} 
+                                        onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientPhone: e.target.value }))} 
                                         className="w-1/2 p-2 border rounded-md" 
                                     />
                                     {activeTemplateName === 'Quotation' && (
@@ -756,15 +726,15 @@ export default function App() {
                                             <input 
                                                 type="text" 
                                                 placeholder="Client GSTIN" 
-                                                value={clientGstin} 
-                                                onChange={e => setClientGstin(e.target.value)} 
+                                                value={invoiceData.clientGstin || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientGstin: e.target.value }))} 
                                                 className="w-1/2 p-2 border rounded-md" 
                                             />
                                             <input 
                                                 type="text" 
                                                 placeholder="Client PAN" 
-                                                value={clientPan} 
-                                                onChange={e => setClientPan(e.target.value)} 
+                                                value={invoiceData.clientPan || ''} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), clientPan: e.target.value }))} 
                                                 className="w-1/2 p-2 border rounded-md" 
                                             />
                                         </div>
@@ -775,13 +745,13 @@ export default function App() {
                                 {activeTemplateName === 'Invoice' && (
                                     <div className="space-y-4 mb-6">
                                         <h3 className="font-semibold text-lg border-b pb-2">Consignee (Ship-to) Details</h3>
-                                        <input type="text" placeholder="Consignee Name" value={consigneeName} onChange={e => setConsigneeName(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <textarea placeholder="Consignee Address" value={consigneeAddress} onChange={e => setConsigneeAddress(e.target.value)} className="w-full p-2 border rounded-md" rows={2}></textarea>
-                                        <input type="text" placeholder="Consignee GSTIN/UIN" value={consigneeGstin} onChange={e => setConsigneeGstin(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Consignee State (e.g., Telangana, Code: 36)" value={consigneeState} onChange={e => setConsigneeState(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('consigneeName', 'Consignee Name')} value={invoiceData.consigneeName || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeName: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <textarea placeholder={getPlaceholderForKey('consigneeAddress', 'Consignee Address')} value={invoiceData.consigneeAddress || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeAddress: e.target.value }))} className="w-full p-2 border rounded-md" rows={2}></textarea>
+                                        <input type="text" placeholder={getPlaceholderForKey('consigneeGstin', 'Consignee GSTIN/UIN')} value={invoiceData.consigneeGstin || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeGstin: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('consigneeState', 'Consignee State (e.g., Telangana, Code: 36)')} value={invoiceData.consigneeState || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeState: e.target.value }))} className="w-full p-2 border rounded-md" />
                                         <div className="flex space-x-2">
-                                            <input type="text" placeholder="Contact Person" value={consigneeContactPerson} onChange={e => setConsigneeContactPerson(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                            <input type="text" placeholder="Contact Phone" value={consigneeContact} onChange={e => setConsigneeContact(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('consigneeContactPerson', 'Contact Person')} value={invoiceData.consigneeContactPerson || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeContactPerson: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('consigneeContact', 'Contact Phone')} value={invoiceData.consigneeContact || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), consigneeContact: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
                                         </div>
                                     </div>
                                 )}
@@ -791,8 +761,8 @@ export default function App() {
                                         <h3 className="font-semibold text-lg border-b pb-2">Ship-To Details</h3>
                                         <textarea 
                                             placeholder="Shipping Address (if different from Vendor)" 
-                                            value={deliveryAddress} 
-                                            onChange={e => setDeliveryAddress(e.target.value)} 
+                                            value={invoiceData.deliveryAddress || ''} 
+                                            onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), deliveryAddress: e.target.value }))} 
                                             className="w-full p-2 border rounded-md" 
                                             rows={2}
                                         ></textarea>
@@ -801,16 +771,12 @@ export default function App() {
                                 
                                 <div className="space-y-4 mb-6">
                                     <h3 className="font-semibold text-lg border-b pb-2">Document Details</h3>
-                                    <input type="text" placeholder="Invoice Title (e.g., Quotation)" value={invoiceTitle} onChange={e => setInvoiceTitle(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <input type="text" placeholder="Project Subject" value={projectSubject} onChange={e => setProjectSubject(e.target.value)} className="w-full p-2 border rounded-md" />
-                                    <div className="flex space-x-2">
-                                       <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                       <input type="text" placeholder={
-                                            activeTemplateName === 'Purchase Order' ? 'P.O. Number' :
-                                            activeTemplateName === 'Quotation' ? 'Quotation #' :
-                                            activeTemplateName === 'Invoice' ? 'Invoice No.' : 'Quote #'
-                                        } value={quotationNumber} onChange={e => setQuotationNumber(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                    </div>
+                                                <input type="text" placeholder={getPlaceholderForKey('invoiceTitle', 'Invoice Title (e.g., Quotation)')} value={invoiceData.invoiceTitle || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), invoiceTitle: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                                <input type="text" placeholder={getPlaceholderForKey('projectSubject', 'Project Subject')} value={invoiceData.projectSubject || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), projectSubject: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                                <div className="flex space-x-2">
+                                                    <input type="date" value={invoiceData.date || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), date: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
+                                                    <input type="text" placeholder={getPlaceholderForKey('quotationNumber', activeTemplateName === 'Purchase Order' ? 'P.O. Number' : activeTemplateName === 'Quotation' ? 'Quotation #' : activeTemplateName === 'Invoice' ? 'Invoice No.' : 'Quote #')} value={invoiceData.quotationNumber || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), quotationNumber: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
+                                                </div>
                                 </div>
 
                                 {/* Tax Settings are now always visible */}
@@ -820,8 +786,8 @@ export default function App() {
                                         <div className="w-1/2">
                                             <label className="block text-sm font-medium text-gray-700">GST Type</label>
                                             <select 
-                                                value={gstType} 
-                                                onChange={e => setGstType(e.target.value)} 
+                                                value={invoiceData.gstType || 'CGST/SGST'} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), gstType: e.target.value }))} 
                                                 className="w-full p-3 border rounded-md bg-white"
                                             >
                                                 <option value="CGST/SGST">CGST / SGST</option>
@@ -832,8 +798,8 @@ export default function App() {
                                             <label className="block text-sm font-medium text-gray-700">Tax Rate (%)</label>
                                             <input 
                                                 type="number" 
-                                                value={globalTaxRate} 
-                                                onChange={e => setGlobalTaxRate(parseFloat(e.target.value) || 0)} 
+                                                value={invoiceData.globalTaxRate || 0} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), globalTaxRate: parseFloat(e.target.value) || 0 }))} 
                                                 className="w-full p-3 border rounded-md" 
                                             />
                                         </div>
@@ -844,19 +810,19 @@ export default function App() {
                                     <div className="space-y-4 mb-6">
                                         <h3 className="font-semibold text-lg border-b pb-2">Shipping & PO Details</h3>
                                         <div className="flex space-x-2">
-                                            <input type="text" placeholder="Requisitioner" value={requisitioner} onChange={e => setRequisitioner(e.target.value)} className="w-full p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('requisitioner', 'Requisitioner')} value={invoiceData.requisitioner || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), requisitioner: e.target.value }))} className="w-full p-2 border rounded-md" />
                                         </div>
                                         <div className="flex space-x-2">
-                                            <input type="text" placeholder="Ship Via (e.g., FedEx)" value={shipVia} onChange={e => setShipVia(e.target.value)} className="w-1/2 p-2 border rounded-md" />
-                                            <input type="text" placeholder="F.O.B." value={fob} onChange={e => setFob(e.target.value)} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('shipVia', 'Ship Via (e.g., FedEx)')} value={invoiceData.shipVia || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), shipVia: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
+                                            <input type="text" placeholder={getPlaceholderForKey('fob', 'F.O.B.')} value={invoiceData.fob || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), fob: e.target.value }))} className="w-1/2 p-2 border rounded-md" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700">Shipping Cost</label>
                                             <input 
                                                 type="number" 
-                                                placeholder="Shipping Cost" 
-                                                value={shippingCost} 
-                                                onChange={e => setShippingCost(parseFloat(e.target.value) || 0)} 
+                                                placeholder={getPlaceholderForKey('shippingCost', 'Shipping Cost')} 
+                                                value={invoiceData.shippingCost || 0} 
+                                                onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), shippingCost: parseFloat(e.target.value) || 0 }))} 
                                                 className="w-full p-2 border rounded-md" 
                                             />
                                         </div>
@@ -867,18 +833,18 @@ export default function App() {
                                 {activeTemplateName === 'Invoice' && (
                                     <div className="space-y-4 mb-6">
                                         <h3 className="font-semibold text-lg border-b pb-2">Dispatch & Delivery Details</h3>
-                                        <input type="text" placeholder="Delivery Note" value={deliveryNote} onChange={e => setDeliveryNote(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Buyer's Order No." value={buyersOrderNo} onChange={e => setBuyersOrderNo(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Dispatch Doc No." value={dispatchDocNo} onChange={e => setDispatchDocNo(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Dispatched Through" value={dispatchedThrough} onChange={e => setDispatchedThrough(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Destination" value={destination} onChange={e => setDestination(e.target.value)} className="w-full p-2 border rounded-md" />
-                                        <input type="text" placeholder="Terms of Delivery" value={termsOfDelivery} onChange={e => setTermsOfDelivery(e.target.value)} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('deliveryNote', 'Delivery Note')} value={invoiceData.deliveryNote || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), deliveryNote: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('buyersOrderNo', "Buyer's Order No.") } value={invoiceData.buyersOrderNo || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), buyersOrderNo: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('dispatchDocNo', 'Dispatch Doc No.')} value={invoiceData.dispatchDocNo || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), dispatchDocNo: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('dispatchedThrough', 'Dispatched Through')} value={invoiceData.dispatchedThrough || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), dispatchedThrough: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('destination', 'Destination')} value={invoiceData.destination || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), destination: e.target.value }))} className="w-full p-2 border rounded-md" />
+                                        <input type="text" placeholder={getPlaceholderForKey('termsOfDelivery', 'Terms of Delivery')} value={invoiceData.termsOfDelivery || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), termsOfDelivery: e.target.value }))} className="w-full p-2 border rounded-md" />
                                     </div>
                                 )}
 
                                 <div className="mb-6">
                                 <h3 className="font-semibold mb-2">Services / Items</h3>
-                                {items.map((item, index) => (
+                                {(invoiceData.items || []).map((item: any, index: number) => (
                                     <InvoiceItem 
                                         key={index} 
                                         item={item} 
@@ -892,20 +858,20 @@ export default function App() {
                                 </div>
                                 
                                 <div className="space-y-4 mb-6">
-                                    <textarea placeholder="Notes / Terms & Conditions" value={notes} onChange={e => setNotes(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+                                    <textarea placeholder={getPlaceholderForKey('notes', 'Notes / Terms & Conditions')} value={invoiceData.notes || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), notes: e.target.value }))} className="w-full p-3 border rounded-md" rows={3}></textarea>
 
                                     {activeTemplateName === 'Invoice' && (
                                         <div className="space-y-4 mb-2">
-                                            <textarea placeholder="Declaration" value={declaration} onChange={e => setDeclaration(e.target.value)} className="w-full p-3 border rounded-md" rows={3}></textarea>
+                                            <textarea placeholder={getPlaceholderForKey('declaration', 'Declaration')} value={invoiceData.declaration || ''} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), declaration: e.target.value }))} className="w-full p-3 border rounded-md" rows={3}></textarea>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700">Round Off</label>
-                                                <input type="number" step="0.01" placeholder="0.00" value={roundOff} onChange={e => setRoundOff(parseFloat(e.target.value) || 0)} className="w-full p-2 border rounded-md" />
+                                                <input type="number" step="0.01" placeholder={getPlaceholderForKey('roundOff', '0.00')} value={invoiceData.roundOff || 0} onChange={e => setInvoiceData((prev:any) => ({ ...(prev||{}), roundOff: parseFloat(e.target.value) || 0 }))} className="w-full p-2 border rounded-md" />
                                             </div>
                                         </div>
                                     )}
 
                                     <label className="block text-sm font-medium text-gray-700">Visual Style</label>
-                                    <select value={template} onChange={e => setTemplate(e.target.value)} className="w-full p-3 border rounded-md bg-white">
+                                    <select value={template} onChange={e => { setTemplate(e.target.value); setInvoiceData((prev:any)=>({ ...(prev||{}), template: e.target.value })); }} className="w-full p-3 border rounded-md bg-white">
                                         {Object.values(VISUAL_TEMPLATES).map(t => <option key={t} value={t}>{t}</option>)}
                                     </select>
                                 </div>
@@ -913,9 +879,9 @@ export default function App() {
                                 <div className="space-y-2 mb-6">
                                     <h3 className="font-semibold text-lg border-b pb-2">Footer Details</h3>
                                     <textarea
-                                        placeholder="Add company footer lines"
-                                        value={footerDetails}
-                                        onChange={(event) => setFooterDetails(event.target.value)}
+                                        placeholder={getPlaceholderForKey('footerDetails', 'Add company footer lines')}
+                                        value={invoiceData.footerDetails || ''}
+                                        onChange={(event) => setInvoiceData((prev:any) => ({ ...(prev||{}), footerDetails: event.target.value }))}
                                         className="w-full p-3 border rounded-md"
                                         rows={3}
                                     ></textarea>
@@ -939,7 +905,7 @@ export default function App() {
                             <h2 className="text-2xl font-semibold mb-4">Live Preview</h2>
                             <div className="overflow-x-auto">
                                 <div style={{width: '210mm'}}>
-                                   {isFormPopulated ? <InvoicePreview ref={previewRef} data={previewData} /> : <div className="bg-white p-8 shadow-lg rounded-xl h-96 flex items-center justify-center text-gray-400">Preview will appear here...</div>}
+                                   {isFormPopulated ? <InvoicePreview ref={previewRef} data={effectivePreviewData} /> : <div className="bg-white p-8 shadow-lg rounded-xl h-96 flex items-center justify-center text-gray-400">Preview will appear here...</div>}
                                 </div>
                             </div>
                             {activeTemplateEditor && (

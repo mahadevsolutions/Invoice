@@ -25,3 +25,46 @@
   display: block !important;
   visibility: visible !important;
 }
+
+/* UI polish: subtle transitions and focus rings for form controls and buttons */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  transition: box-shadow 150ms ease, transform 120ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.12); /* subtle indigo ring */
+  border-color: rgba(99,102,241,0.8);
+}
+
+button {
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 140ms ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0) scale(0.985);
+}
+
+/* small utility for elevated cards on hover */
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(16,24,40,0.06);
+}
+
+/* nicer focus visuals for inputs when Tailwind classes present */
+.focus-ring:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.12) !important;
+}

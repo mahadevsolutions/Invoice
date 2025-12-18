@@ -2,6 +2,15 @@ import type { ComputedItem } from 'src/components/ItemsTable';
 
 export type ColumnFormatter = 'currency' | 'number' | 'text';
 
+export type FieldType =
+  | 'text'
+  | 'number'
+  | 'date'
+  | 'textarea'
+  | 'select'
+  | 'currency'
+  | 'checkbox';
+
 export interface FieldConfig {
   key: string;
   label: string;
@@ -9,6 +18,28 @@ export interface FieldConfig {
   required?: boolean;
   className?: string;
   order?: number;
+  type?: FieldType;
+  placeholder?: string;
+  defaultValue?: any;
+  style?: {
+    fontFamily?: 'sans' | 'serif' | 'mono';
+    fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+    textColor?: string; // expect tailwind class like 'text-gray-700'
+    bgColor?: string; // expect tailwind class like 'bg-white'
+    align?: 'left' | 'center' | 'right';
+    padding?: string; // tailwind padding class e.g. 'p-2', 'py-1'
+    margin?: string; // tailwind margin class
+  };
+  // for select fields
+  options?: string[];
+  // simple validation rules (optional)
+  validation?: {
+    pattern?: string; // regex
+    min?: number; // for numbers
+    max?: number; // for numbers
+    customMessage?: string;
+  };
 }
 
 export interface ColumnConfig {
@@ -27,12 +58,25 @@ export interface SectionConfig {
   visible: boolean;
   order?: number;
   fields: FieldConfig[];
+  style?: {
+    fontFamily?: 'sans' | 'serif' | 'mono';
+    fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+    textColor?: string;
+    bgColor?: string;
+    align?: 'left' | 'center' | 'right';
+    padding?: string;
+    margin?: string;
+  };
 }
 
 export interface AuthorizedByConfig {
   visible: boolean;
   label: string;
   signatureUrl?: string;
+  personName?: string;
+  designation?: string;
+  align?: 'left' | 'center' | 'right';
 }
 
 export interface TemplateConfig {
@@ -124,6 +168,11 @@ export const mergeTemplateConfig = (
         existing.order = section.order;
       }
 
+      // merge section style if present
+      if (section.style) {
+        existing.style = { ...(existing.style || {}), ...(section.style || {}) };
+      }
+
       const fieldMap = new Map(existing.fields.map((field) => [field.key, field] as const));
       section.fields.forEach((field) => {
         const existingField = fieldMap.get(field.key);
@@ -132,6 +181,9 @@ export const mergeTemplateConfig = (
           existingField.visible = field.visible ?? existingField.visible;
           existingField.required = field.required ?? existingField.required;
           existingField.className = field.className || existingField.className;
+          if (field.style) {
+            existingField.style = { ...(existingField.style || {}), ...(field.style || {}) };
+          }
           if (typeof field.order === 'number') {
             existingField.order = field.order;
           }
@@ -190,6 +242,12 @@ export const mergeTemplateConfig = (
         'Authorized By',
       signatureUrl:
         override.authorizedBy.signatureUrl ?? merged.authorizedBy?.signatureUrl,
+      personName:
+        override.authorizedBy.personName ?? merged.authorizedBy?.personName,
+      designation:
+        override.authorizedBy.designation ?? merged.authorizedBy?.designation,
+      align:
+        override.authorizedBy.align ?? merged.authorizedBy?.align ?? 'right',
     };
   }
 

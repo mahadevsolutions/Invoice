@@ -12,8 +12,13 @@ import {
     getVisibleColumns,
     isFieldVisible,
     isSectionVisible,
+    getOrderedFields,
+    getFieldConfig,
     resolveTemplateConfig,
 } from 'src/components/template-editor/field-types';
+import { renderFieldNode } from 'src/components/template-editor/field-renderer';
+import { mapFieldStyleToClasses, mapFieldStyleToInlineStyle } from 'src/components/template-editor/style-utils';
+import { getSectionConfig } from 'src/components/template-editor/field-types';
 
 interface POProps {
     data: any;
@@ -53,7 +58,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                 .filter((column) => {
                     if (column.key === 'igst' && gstType !== 'IGST') return false;
                     if ((column.key === 'cgst' || column.key === 'sgst') && gstType !== 'CGST_SGST') return false;
-                    return column.visible !== false;
+                        return column.visible !== false;
                 }),
         [resolvedConfig, gstType],
     );
@@ -122,6 +127,20 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
     const totalsVisible = isSectionVisible(resolvedConfig, 'totals', true);
     const notesVisible = isSectionVisible(resolvedConfig, 'notes', true) && Boolean(purchaseData.notes);
 
+    const renderField = (sectionId: string, field: any) =>
+        renderFieldNode({ sectionId, field, config: resolvedConfig, data: purchaseData, currency });
+
+    const headerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'header')?.style);
+    const headerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'header')?.style);
+    const supplierInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'supplier')?.style);
+    const shipToInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'shipTo')?.style);
+    const totalsInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'totals')?.style);
+    const notesInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'notes')?.style);
+    const supplierClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'supplier')?.style);
+    const shipToClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'shipTo')?.style);
+    const totalsClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'totals')?.style);
+    const notesClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'notes')?.style);
+
     return (
         <div className="bg-white p-6 font-sans text-xs text-black">
             <style>{`
@@ -131,120 +150,25 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             `}</style>
 
             {headerVisible && (
-                <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className={`mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between ${headerClass}`} style={headerInline}>
                     <div className="space-y-0">
-                        {isFieldVisible(resolvedConfig, 'header', 'companyNameLabel') && (
-                            <h1 className="text-2xl font-bold text-black">
-                                {purchaseData.companyName || getFieldLabel(resolvedConfig, 'header', 'companyNameLabel', 'Company')}
-                            </h1>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'header', 'companyAddressLabel') && purchaseData.companyAddress ? (
-                            <p className="whitespace-pre-line text-black">
-                                {purchaseData.companyAddress}
-                            </p>
-                        ) : null}
-                        <div className="text-black font-medium">
-                          {isFieldVisible(resolvedConfig, 'header', 'companyEmailLabel') && purchaseData.companyEmail ? (
-                            <div>
-                              <strong>{getFieldLabel(resolvedConfig, 'header', 'companyEmailLabel', 'Email')}: </strong>
-                              <span className="font-normal">{purchaseData.companyEmail}</span>
-                            </div>
-                          ) : null}
-                        
-                          {isFieldVisible(resolvedConfig, 'header', 'companyPhoneLabel') && purchaseData.companyPhone ? (
-                            <div>
-                              <strong>{getFieldLabel(resolvedConfig, 'header', 'companyPhoneLabel', 'Phone')}: </strong>
-                              <span className="font-normal">{purchaseData.companyPhone}</span>
-                            </div>
-                          ) : null}
-                        </div>
+                        {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
                     </div>
                     <div className="text-right">
-                        {isFieldVisible(resolvedConfig, 'header', 'title') && (
-                            <h2 className="text-2xl font-semibold text-black">
-                                {getFieldLabel(resolvedConfig, 'header', 'title', 'PURCHASE ORDER')}
-                            </h2>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'header', 'projectSubjectLabel') && (
-                            <p className="text-black-600">
-                                <strong>{getFieldLabel(resolvedConfig, 'header', '', '')}</strong>{' '}
-                                {purchaseData.projectSubject || ''}
-                            </p>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'header', 'poNumberLabel') && (
-                            <p className="font-semibold text-black">
-                                {getFieldLabel(resolvedConfig, 'header', 'poNumberLabel', 'PO #')}: {purchaseData.quotationNumber || ''}
-                            </p>
-                        )}
-                        {isFieldVisible(resolvedConfig, 'header', 'dateLabel') && (
-                            <p className="font-semibold text-black">
-                                {getFieldLabel(resolvedConfig, 'header', 'dateLabel', 'Date')}: {purchaseData.date || ''}
-                            </p>
-                        )}
+                        {/* allow header fields to include title/logo entries as configured */}
+                        {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
                     </div>
                 </div>
             )}
 
             {(supplierVisible || shipToVisible) && (
-                <div className="mb-6 grid grid-cols-2 gap-6 md:grid-cols-2 bg-orange-200 px-4 py-2 rounded">
-                    {supplierVisible && (
-                        <div className="space-y-0">
-                            {isFieldVisible(resolvedConfig, 'supplier', 'heading') && (
-                                <h3 className="text-base font-bold text-black-900">
-                                    {getFieldLabel(resolvedConfig, 'supplier', 'heading', 'Supplier')}
-                                </h3>
-                            )}
-                            {purchaseData.clientName ? <p className="font-semibold text-md text-black-800">{purchaseData.clientName}</p> : null}
-                            {purchaseData.clientCompany ? <p className="text-md text-black-700">{purchaseData.clientCompany}</p> : null}
-                            {isFieldVisible(resolvedConfig, 'supplier', 'addressLabel') && purchaseData.clientAddress ? (
-                                <p className="whitespace-pre-line text-md text-black-700">
-                                    {purchaseData.clientAddress}
-                                </p>
-                            ) : null}
-                            {isFieldVisible(resolvedConfig, 'supplier', 'contactLabel') && purchaseData.clientPhone ? (
-                                <p className="text-md text-black-700">
-                                    <strong>{getFieldLabel(resolvedConfig, 'supplier', 'contactLabel', 'Contact')}:</strong>{' '}
-                                    {purchaseData.clientPhone}
-                                </p>
-                            ) : null}
-                        </div>
-                    )}
-                    {shipToVisible && (
-                        <div className="space-y-0">
-                            {isFieldVisible(resolvedConfig, 'shipTo', 'heading') && (
-                                <h3 className="text-base  font-bold text-black-900">
-                                    {getFieldLabel(resolvedConfig, 'shipTo', 'heading', 'Ship To')}
-                                </h3>
-                            )}
-                            {isFieldVisible(resolvedConfig, 'shipTo', 'addressLabel') && purchaseData.deliveryAddress ? (
-                                <p className="whitespace-pre-line text-md text-black-700">
-                                    {purchaseData.deliveryAddress}
-                                </p>
-                            ) : null}
-                            <div className="space-y-1">
-                                {isFieldVisible(resolvedConfig, 'shipTo', 'requisitionerLabel') && purchaseData.requisitioner ? (
-                                    <p>
-                                        <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'requisitionerLabel', 'Requisitioner')}:</strong>{' '}
-                                        {purchaseData.requisitioner}
-                                    </p>
-                                ) : null}
-                                <div className="flex flex-wrap gap-3">
-                                    {isFieldVisible(resolvedConfig, 'shipTo', 'shipViaLabel') && purchaseData.shipVia ? (
-                                        <p>
-                                            <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'shipViaLabel', 'Ship Via')}:</strong>{' '}
-                                            {purchaseData.shipVia}
-                                        </p>
-                                    ) : null}
-                                    {isFieldVisible(resolvedConfig, 'shipTo', 'fobLabel') && purchaseData.fob ? (
-                                        <p>
-                                            <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'fobLabel', 'F.O.B.')}:</strong>{' '}
-                                            {purchaseData.fob}
-                                        </p>
-                                    ) : null}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                <div className={`mb-6 grid grid-cols-2 gap-6 md:grid-cols-2 px-4 py-2 rounded ${supplierClass} ${shipToClass}`} style={{ ...supplierInline, ...shipToInline }}>
+                    <div>
+                        {supplierVisible && getOrderedFields(resolvedConfig, 'supplier').map((field) => renderField('supplier', field))}
+                    </div>
+                    <div>
+                        {shipToVisible && getOrderedFields(resolvedConfig, 'shipTo').map((field) => renderField('shipTo', field))}
+                    </div>
                 </div>
             )}
 
@@ -297,77 +221,56 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                 </div>
             </section>
 
-            {totalsVisible && (
-          <div className="flex justify-end">
-            <div className="w-72 text-sm">
-              {/* Card wrapper */}
-              <div className="rounded border border-gray-200 overflow-hidden shadow-sm bg-white">
-            
-                {/* Content rows (uses divide to render lines between rows) */}
-                <div className="divide-y divide-gray-200">
-                  {isFieldVisible(resolvedConfig, 'totals', 'subtotalLabel') && (
-                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
-                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'subtotalLabel', 'Subtotal')}</span>
-                      <span className="font-medium">{formatCurrency(subtotal)}</span>
-                    </div>
-                  )}
+                        {totalsVisible && (
+                    <div className="flex justify-end">
+                        <div className="w-72 text-sm">
+                            <div className="rounded border border-gray-200 overflow-hidden shadow-sm bg-white">
+                                <div className="divide-y divide-gray-200">
+                                    {getOrderedFields(resolvedConfig, 'totals').map((field) => {
+                                        if (field.visible === false) return null;
+                                        const label = getFieldLabel(resolvedConfig, 'totals', field.key, field.label || '');
+                                        let value: any = '';
+                                        switch (field.key) {
+                                            case 'subtotalLabel': value = formatCurrency(subtotal); break;
+                                            case 'cgstLabel': value = formatCurrency(totalCgst); break;
+                                            case 'sgstLabel': value = formatCurrency(totalSgst); break;
+                                            case 'igstLabel': value = formatCurrency(totalIgst); break;
+                                            case 'shippingLabel': value = formatCurrency(shipping); break;
+                                            default: value = (purchaseData as any)[field.key] ?? field.defaultValue ?? '';
+                                        }
+                                        return (
+                                            <div key={field.key} className="flex items-center justify-between px-4 py-2 text-gray-700">
+                                                <span className="text-sm">{label}</span>
+                                                <span className="font-medium">{value}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
 
-                  {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
-                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
-                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}</span>
-                      <span className="font-medium">{formatCurrency(totalIgst)}</span>
-                    </div>
-                  )}
-
-                  {gstType === 'CGST_SGST' && (
-                    <>
-                      {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
-                        <div className="flex items-center justify-between px-4 py-2 text-gray-700">
-                          <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}</span>
-                          <span className="font-medium">{formatCurrency(totalCgst)}</span>
+                                {getOrderedFields(resolvedConfig, 'totals').some(f => f.key === 'grandTotalLabel' && f.visible !== false) && (
+                                    <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between text-white">
+                                        <span className="text-sm font-semibold">{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Grand Total')}</span>
+                                        <span className="text-sm font-bold">{formatCurrency(finalTotal)}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                      )}
-                      {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
-                        <div className="flex items-center justify-between px-4 py-2 text-gray-700">
-                          <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}</span>
-                          <span className="font-medium">{formatCurrency(totalSgst)}</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {isFieldVisible(resolvedConfig, 'totals', 'shippingLabel') && (
-                    <div className="flex items-center justify-between px-4 py-2 text-gray-700">
-                      <span className="text-sm">{getFieldLabel(resolvedConfig, 'totals', 'shippingLabel', 'Shipping')}</span>
-                      <span className="font-medium">{formatCurrency(shipping)}</span>
                     </div>
-                  )}
-                </div>
-              
-                {/* Grand Total row */}
-                {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
-                  <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between text-white">
-                    <span className="text-sm font-semibold">{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Grand Total')}</span>
-                    <span className="text-sm font-bold">{formatCurrency(finalTotal)}</span>
-                  </div>
                 )}
-              </div>
-            </div>
-          </div>
-        )}
 
             <AuthorizedBy
-                signatureUrl={purchaseData.authorizedSignatureUrl}
-                personName={purchaseData.authorizedPersonName}
-                align="right"
+                signatureUrl={purchaseData.authorizedSignatureUrl ?? resolvedConfig.authorizedBy?.signatureUrl}
+                personName={purchaseData.authorizedPersonName ?? resolvedConfig.authorizedBy?.personName}
+                designation={purchaseData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation}
+                align={(resolvedConfig.authorizedBy?.align as any) ?? 'right'}
                 label={resolvedConfig.authorizedBy?.label}
                 visible={resolvedConfig.authorizedBy?.visible !== false}
             />
 
             {notesVisible && (
-                <div className="no-print-footer mt-6 text-xs text-black-600">
+                <div className="no-print-footer mt-6 text-xs text-black-600" style={notesInline}>
                     <p>
-                        <strong>{getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Notes')}:</strong>{' '}
+                        <strong>{getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Notes')}</strong>{' '}
                         {purchaseData.notes}
                     </p>
                 </div>

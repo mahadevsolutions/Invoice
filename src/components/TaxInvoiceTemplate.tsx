@@ -12,8 +12,13 @@ import {
   getVisibleColumns,
   isFieldVisible,
   isSectionVisible,
+  getOrderedFields,
+  getFieldConfig,
+  getSectionConfig,
   resolveTemplateConfig,
 } from 'src/components/template-editor/field-types';
+import { mapFieldStyleToClasses, mapFieldStyleToInlineStyle } from 'src/components/template-editor/style-utils';
+import { renderFieldNode } from 'src/components/template-editor/field-renderer';
 
 interface TaxInvoiceProps {
   data: any;
@@ -88,6 +93,22 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   // --- NEW: sync HSN visibility with tableColumns ---
   const showHSN = tableColumns.some((col) => col.key === 'hsn');
 
+  // map section styles to classes
+  const headerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'header')?.style);
+  const headerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'header')?.style);
+  const companyClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'companyDetails')?.style);
+  const companyInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'companyDetails')?.style);
+  const consigneeClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'consignee')?.style);
+  const consigneeInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'consignee')?.style);
+  const buyerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'buyer')?.style);
+  const buyerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'buyer')?.style);
+  const orderMetaClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
+  const orderMetaInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
+  const amountInWordsClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'amountInWords')?.style);
+  const amountInWordsInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'amountInWords')?.style);
+  const bankDetailsClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'bankDetails')?.style);
+  const bankDetailsInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'bankDetails')?.style);
+
   const formatCurrency = (value: unknown): string => {
     const numeric = toNumber(value) ?? 0;
     return `${currency}${numeric.toLocaleString('en-IN')}`;
@@ -156,6 +177,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const amountInWordsVisible = isSectionVisible(resolvedConfig, 'amountInWords', true);
   const bankDetailsVisible = isSectionVisible(resolvedConfig, 'bankDetails', true);
 
+  const renderField = (sectionId: string, field: any) =>
+    renderFieldNode({ sectionId, field, config: resolvedConfig, data: invoiceData, currency });
+
   return (
     <div className="bg-white p-6 font-sans text-xs text-black">
       <style>{`
@@ -166,175 +190,39 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       `}</style>
 
       {headerVisible && (
-        <header className="mb-4 text-center avoid-break">
-          {isFieldVisible(resolvedConfig, 'header', 'title') && (
-            <h1 className="text-2xl font-bold text-black">
-              {invoiceData.invoiceTitle || getFieldLabel(resolvedConfig, 'header', 'title', 'Tax Invoice')}
-            </h1>
-          )}
-          {isFieldVisible(resolvedConfig, 'header', 'subjectLabel') && invoiceData.projectSubject ? (
-            <p className="font-bold text-black">
-              {getFieldLabel(resolvedConfig, 'header', '', '')}{invoiceData.projectSubject}
-            </p>
-          ) : null}
-        </header>
+        <header className={`mb-4 text-center avoid-break ${headerClass}`} style={headerInline}>
+            {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
+          </header>
       )}
 
       {companySectionVisible && (
-        <section className="mb-4 border-y border-gray-400 py-2 text-center text-xxs text-black avoid-break">
-          {isFieldVisible(resolvedConfig, 'companyDetails', 'companyHeading') && (
-            <h2 className="text-xl font-bold text-black">
-              {invoiceData.companyName || getFieldLabel(resolvedConfig, 'companyDetails', 'companyHeading', 'Company Name')}
-            </h2>
-          )}
-          {isFieldVisible(resolvedConfig, 'companyDetails', 'addressLabel') && invoiceData.companyAddress ? (
-            <p>{invoiceData.companyAddress}</p>
-          ) : null}
-          {isFieldVisible(resolvedConfig, 'companyDetails', 'gstinLabel') && (
-            <p>
-              <strong>{getFieldLabel(resolvedConfig, 'companyDetails', 'gstinLabel', 'GSTIN/UIN')}:</strong>{' '}
-              {invoiceData.companyGstin || '---'}
-            </p>
-          )}
-          <p>
-            {isFieldVisible(resolvedConfig, 'companyDetails', 'contactLabel') && invoiceData.companyPhone ? (
-              <>
-                <strong>{getFieldLabel(resolvedConfig, 'companyDetails', 'contactLabel', 'Contact')}:</strong>{' '}
-                {invoiceData.companyPhone}
-              </>
-            ) : null}
-            {isFieldVisible(resolvedConfig, 'companyDetails', 'emailLabel') && invoiceData.companyEmail ? (
-              <>
-                {'  '}|{' '}
-                <strong>{getFieldLabel(resolvedConfig, 'companyDetails', 'emailLabel', 'E-Mail')}:</strong>{' '}
-                {invoiceData.companyEmail}
-              </>
-            ) : null}
-          </p>
+        <section className={`mb-4 border-y border-gray-400 py-2 text-center text-xxs text-black avoid-break ${companyClass}`} style={companyInline}>
+          {getOrderedFields(resolvedConfig, 'companyDetails').map((field) => renderField('companyDetails', field))}
         </section>
       )}
 
       <section className="mb-2 grid grid-cols-1 gap-2 text-xs md:grid-cols-3 avoid-break">
         {consigneeVisible && (
-          <div className="bg-violet-100 p-2">
+          <div className={`p-2 ${consigneeClass}`} style={consigneeInline}>
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'consignee', 'Consignee (Ship to)')}
             </h3>
-            <p className="font-bold text-gray-800">{invoiceData.consigneeName || invoiceData.clientName || '---'}</p>
-            {invoiceData.consigneeAddress || invoiceData.clientAddress ? (
-              <p>{invoiceData.consigneeAddress || invoiceData.clientAddress}</p>
-            ) : null}
-            {isFieldVisible(resolvedConfig, 'consignee', 'gstinLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'consignee', 'gstinLabel', 'GSTIN/UIN')}:</strong>{' '}
-                {invoiceData.consigneeGstin || invoiceData.clientGstin || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'consignee', 'stateLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'consignee', 'stateLabel', 'State Name')}:</strong>{' '}
-                {invoiceData.consigneeState || invoiceData.clientState || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'consignee', 'contactPersonLabel') && invoiceData.consigneeContactPerson ? (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'consignee', 'contactPersonLabel', 'Contact Person')}:</strong>{' '}
-                {invoiceData.consigneeContactPerson}
-              </p>
-            ) : null}
-            {isFieldVisible(resolvedConfig, 'consignee', 'contactLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'consignee', 'contactLabel', 'Contact')}:</strong>{' '}
-                {invoiceData.consigneeContact || '---'}
-              </p>
-            )}
+            {getOrderedFields(resolvedConfig, 'consignee').map((field) => renderField('consignee', field))}
           </div>
         )}
 
         {buyerVisible && (
-          <div className="bg-violet-100 p-2">
+          <div className={`p-2 ${buyerClass}`} style={buyerInline}>
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'buyer', 'Buyer (Bill to)')}
             </h3>
-            <p className="font-bold text-gray-800">{invoiceData.clientName || '---'}</p>
-            {invoiceData.clientAddress ? <p>{invoiceData.clientAddress}</p> : null}
-            {isFieldVisible(resolvedConfig, 'buyer', 'gstinLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'buyer', 'gstinLabel', 'GSTIN/UIN')}:</strong>{' '}
-                {invoiceData.clientGstin || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'buyer', 'stateLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'buyer', 'stateLabel', 'State Name')}:</strong>{' '}
-                {invoiceData.clientState || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'buyer', 'contactPersonLabel') && invoiceData.clientContactPerson ? (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'buyer', 'contactPersonLabel', 'Contact Person')}:</strong>{' '}
-                {invoiceData.clientContactPerson}
-              </p>
-            ) : null}
-            {isFieldVisible(resolvedConfig, 'buyer', 'contactLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'buyer', 'contactLabel', 'Contact')}:</strong>{' '}
-                {invoiceData.clientPhone || '---'}
-              </p>
-            )}
+            {getOrderedFields(resolvedConfig, 'buyer').map((field) => renderField('buyer', field))}
           </div>
         )}
 
         {orderMetaVisible && (
-          <div className="bg-violet-100 p-2 text-xs text-gray-700">
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'invoiceNumberLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceNumberLabel', 'Invoice No.')}:</strong>{' '}
-                <span className="font-bold text-gray-900">{invoiceData.quotationNumber || '---'}</span>
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'invoiceDateLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceDateLabel', 'Dated')}:</strong>{' '}
-                <span className="font-bold text-gray-900">{invoiceData.date || '---'}</span>
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'deliveryNoteLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'deliveryNoteLabel', 'Delivery Note')}:</strong>{' '}
-                {invoiceData.deliveryNote || '--'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'buyersOrderLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'buyersOrderLabel', "Buyer's Order No.")}:</strong>{' '}
-                {invoiceData.buyersOrderNo || '--'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'dispatchDocLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'dispatchDocLabel', 'Dispatch Doc No.')}:</strong>{' '}
-                {invoiceData.dispatchDocNo || '--'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'dispatchedThroughLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'dispatchedThroughLabel', 'Dispatched through')}:</strong>{' '}
-                {invoiceData.dispatchedThrough || '--'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'destinationLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'destinationLabel', 'Destination')}:</strong>{' '}
-                {invoiceData.destination || '--'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'orderMeta', 'termsLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'orderMeta', 'termsLabel', 'Terms of Delivery')}:</strong>{' '}
-                {invoiceData.termsOfDelivery || '--'}
-              </p>
-            )}
+          <div className={`p-2 text-xs text-gray-700 ${orderMetaClass}`} style={orderMetaInline}>
+            {getOrderedFields(resolvedConfig, 'orderMeta').map((field) => renderField('orderMeta', field))}
           </div>
         )}
       </section>
@@ -464,97 +352,78 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               Tax Summary
             </div>
             <dl className="divide-y divide-gray-200 text-[0.8rem]">
-              {isFieldVisible(resolvedConfig, 'totals', 'subtotalLabel') && (
-                <div className="flex items-center justify-between px-4 py-2">
-                  <dt className="text-gray-600">
-                    {getFieldLabel(resolvedConfig, 'totals', 'subtotalLabel', 'Subtotal')}
-                  </dt>
-                  <dd className="font-semibold text-gray-900">{formatCurrency(subtotal)}</dd>
-                </div>
-              )}
-              {gstType === 'IGST' && isFieldVisible(resolvedConfig, 'totals', 'igstLabel') && (
-                <div className="flex items-center justify-between px-4 py-2">
-                  <dt className="text-gray-600">
-                    {getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST')}
-                  </dt>
-                  <dd className="font-semibold text-gray-900">{formatCurrency(totalIgst)}</dd>
-                </div>
-              )}
-              {gstType === 'CGST_SGST' && (
-                <>
-                  {isFieldVisible(resolvedConfig, 'totals', 'cgstLabel') && (
-                    <div className="flex items-center justify-between px-4 py-2">
-                      <dt className="text-gray-600">
-                        {getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST')}
-                      </dt>
-                      <dd className="font-semibold text-gray-900">{formatCurrency(totalCgst)}</dd>
-                    </div>
-                  )}
-                  {isFieldVisible(resolvedConfig, 'totals', 'sgstLabel') && (
-                    <div className="flex items-center justify-between px-4 py-2">
-                      <dt className="text-gray-600">
-                        {getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST')}
-                      </dt>
-                      <dd className="font-semibold text-gray-900">{formatCurrency(totalSgst)}</dd>
-                    </div>
-                  )}
-                </>
-              )}
-              {isFieldVisible(resolvedConfig, 'totals', 'totalTaxLabel') && (
-                <div className="flex items-center justify-between px-4 py-2">
-                  <dt className="text-gray-600">
-                    {getFieldLabel(resolvedConfig, 'totals', 'totalTaxLabel', 'Total Tax')}
-                  </dt>
-                  <dd className="font-semibold text-gray-900">{formatCurrency(totalTax)}</dd>
-                </div>
-              )}
-              {isFieldVisible(resolvedConfig, 'totals', 'roundOffLabel') && (roundOff !== 0 || invoiceData.roundOff != null) && (
-                <div className="flex items-center justify-between px-4 py-2">
-                  <dt className="text-gray-600">
-                    {getFieldLabel(resolvedConfig, 'totals', 'roundOffLabel', 'Round Off')}
-                  </dt>
-                  <dd className="font-semibold text-gray-900">{formatCurrency(roundOff)}</dd>
-                </div>
-              )}
-              {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
-                <div className="flex items-center justify-between bg-gray-900 px-4 py-3 font-bold text-white">
-                  <dt>
-                    {getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Grand Total')}
-                  </dt>
-                  <dd>{formatCurrency(payableTotal)}</dd>
-                </div>
-              )}
+              {getOrderedFields(resolvedConfig, 'totals').map((field) => {
+                if (field.visible === false) return null;
+                const label = getFieldLabel(resolvedConfig, 'totals', field.key, field.label || '');
+                let value: any = '';
+                switch (field.key) {
+                  case 'subtotalLabel':
+                    value = formatCurrency(subtotal);
+                    break;
+                  case 'cgstLabel':
+                    value = formatCurrency(totalCgst);
+                    break;
+                  case 'sgstLabel':
+                    value = formatCurrency(totalSgst);
+                    break;
+                  case 'igstLabel':
+                    value = formatCurrency(totalIgst);
+                    break;
+                  case 'totalTaxLabel':
+                    value = formatCurrency(totalTax);
+                    break;
+                  case 'roundOffLabel':
+                    if (roundOff === 0 && invoiceData.roundOff == null) return null;
+                    value = formatCurrency(roundOff);
+                    break;
+                  case 'grandTotalLabel':
+                    value = formatCurrency(payableTotal);
+                    break;
+                  default:
+                    // fallback to invoiceData or default
+                    value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
+                }
+
+                return (
+                  <div key={field.key} className="flex items-center justify-between px-4 py-2">
+                    <dt className="text-gray-600">{label}</dt>
+                    <dd className="font-semibold text-gray-900">{value}</dd>
+                  </div>
+                );
+              })}
             </dl>
           </div>
         </section>
       )}
 
       {amountInWordsVisible && (
-        <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
-          {isFieldVisible(resolvedConfig, 'amountInWords', 'amountChargeableLabel') && (
-            <p className="font-bold text-gray-800">
-              {getFieldLabel(resolvedConfig, 'amountInWords', 'amountChargeableLabel', 'Amount Chargeable (in words)')}{': '}
-              <span className="font-normal text-gray-700">{amountInWords}</span>
-            </p>
-          )}
-        </section>
-      )}
-
-      {amountInWordsVisible && isFieldVisible(resolvedConfig, 'amountInWords', 'taxAmountLabel') && (
-        <section className="mb-2 avoid-break">
-          <div className="font-bold text-gray-800">
-            {getFieldLabel(resolvedConfig, 'amountInWords', 'taxAmountLabel', 'Tax Amount (in words)')}{': '}
-            {taxInWords}
-          </div>
-        </section>
+        <>
+          <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
+            {getOrderedFields(resolvedConfig, 'amountInWords').map((field) => {
+              if (field.visible === false) return null;
+              const label = getFieldLabel(resolvedConfig, 'amountInWords', field.key, field.label || '');
+              let value: any = '';
+              if (field.key === 'amountChargeableLabel') value = amountInWords;
+              else if (field.key === 'taxAmountLabel') value = taxInWords;
+              else value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
+              return (
+                <p key={field.key} className="font-bold text-gray-800">
+                  {label} 
+                  <span className="font-normal text-gray-700">{value}</span>
+                </p>
+              );
+            })}
+          </section>
+        </>
       )}
 
       <AuthorizedBy
-        signatureUrl={invoiceData.authorizedSignatureUrl}
-        personName={invoiceData.authorizedPersonName}
-        align="right"
-        label={resolvedConfig.authorizedBy?.label}
-        visible={resolvedConfig.authorizedBy?.visible !== false}
+          signatureUrl={invoiceData.authorizedSignatureUrl ?? resolvedConfig.authorizedBy?.signatureUrl}
+          personName={invoiceData.authorizedPersonName ?? resolvedConfig.authorizedBy?.personName}
+          designation={invoiceData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation}
+          align={(resolvedConfig.authorizedBy?.align as any) ?? 'right'}
+          label={resolvedConfig.authorizedBy?.label}
+          visible={resolvedConfig.authorizedBy?.visible !== false}
       />
 
       {bankDetailsVisible && (
@@ -563,32 +432,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
             <h4 className="mb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'bankDetails', "Company's Bank Details")}
             </h4>
-            {isFieldVisible(resolvedConfig, 'bankDetails', 'bankNameLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'bankDetails', 'bankNameLabel', 'Bank Name')}:</strong>{' '}
-                {invoiceData.companyBankName || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'bankDetails', 'accountNumberLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'bankDetails', 'accountNumberLabel', 'A/c No.')}:</strong>{' '}
-                {invoiceData.companyAccountNo || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'bankDetails', 'branchLabel') && (
-              <p>
-                <strong>{getFieldLabel(resolvedConfig, 'bankDetails', 'branchLabel', 'Branch & IFS Code')}:</strong>{' '}
-                {invoiceData.companyBankBranch || '---'}
-              </p>
-            )}
-            {isFieldVisible(resolvedConfig, 'bankDetails', 'declarationHeading') && invoiceData.declaration ? (
-              <>
-                <h4 className="mt-2 mb-1 font-bold text-gray-900">
-                  {getFieldLabel(resolvedConfig, 'bankDetails', 'declarationHeading', 'Declaration')}
-                </h4>
-                <p>{invoiceData.declaration}</p>
-              </>
-            ) : null}
+            {getOrderedFields(resolvedConfig, 'bankDetails').map((field) => renderField('bankDetails', field))}
           </div>
         </footer>
       )}

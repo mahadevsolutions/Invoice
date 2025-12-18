@@ -5,6 +5,7 @@ type AlignOption = 'left' | 'center' | 'right';
 interface AuthorizedByProps {
   signatureUrl?: string | null;
   personName?: string | null;
+  designation?: string | null;
   align?: AlignOption;
   className?: string;
   label?: string;
@@ -19,6 +20,7 @@ interface AuthorizedByProps {
 const AuthorizedBy: React.FC<AuthorizedByProps> = ({
   signatureUrl,
   personName,
+  designation,
   align = 'right',
   className = '',
   label,
@@ -26,7 +28,7 @@ const AuthorizedBy: React.FC<AuthorizedByProps> = ({
   visible = true,
 }) => {
   if (!visible) return null;
-  if (!signatureUrl && !personName) return null;
+  if (!signatureUrl && !personName && !designation) return null;
 
   const alignmentClasses: Record<AlignOption, string> = {
     left: 'items-start text-left',
@@ -64,6 +66,10 @@ const AuthorizedBy: React.FC<AuthorizedByProps> = ({
           {personName}
         </span>
       ) : null}
+        {/** optional designation */}
+        {designation ? (
+          <span className="text-xs text-gray-600">{designation}</span>
+        ) : null}
     </div>
   );
 };
