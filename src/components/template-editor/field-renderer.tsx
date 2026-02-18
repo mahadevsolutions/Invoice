@@ -43,8 +43,16 @@ const resolveRawValue = (data: any, field: any, sectionId: string) => {
   const keys = Object.keys(data || {});
   const strippedLower = stripped.toLowerCase();
 
+  // --- Explicit Overrides for known schema mismatches ---
+  if (strippedLower === 'invoicenumber' && 'quotationNumber' in data) return data.quotationNumber;
+  if (strippedLower === 'invoicedate' && 'date' in data) return data.date;
+  if ((strippedLower === 'subject' || strippedLower === 'projectsubject') && 'projectSubject' in data) return data.projectSubject;
+  // -----------------------------------------------------
+
   // try to find an exact containing key (e.g., companyGstin, clientGstin)
   const containsMatches = keys.filter((k) => k.toLowerCase().includes(strippedLower));
+
+  // Only return exact match if it's truly unique and matches name well
   if (containsMatches.length === 1) return data[containsMatches[0]];
 
   // handle simple synonyms/abbreviations (e.g., "accountNumber" vs "accountNo")
@@ -56,6 +64,15 @@ const resolveRawValue = (data: any, field: any, sectionId: string) => {
     altVariants.add(strippedLower.replace(/account/g, 'acct'));
     altVariants.add(strippedLower.replace(/acct/g, 'account'));
   }
+
+  if (strippedLower.includes('contact')) {
+    altVariants.add(strippedLower.replace(/contact/g, 'phone'));
+  }
+  if (strippedLower.includes('phone')) {
+    altVariants.add(strippedLower.replace(/phone/g, 'contact'));
+  }
+
+
   for (const v of Array.from(altVariants)) {
     const matches = keys.filter((k) => k.toLowerCase().includes(v));
     if (matches.length === 1) return data[matches[0]];
@@ -72,13 +89,31 @@ const resolveRawValue = (data: any, field: any, sectionId: string) => {
     shipTo: ['consignee', 'delivery', 'ship'],
     orderMeta: ['invoice', 'quotation', 'date', 'delivery', 'buyersOrder', 'dispatch'],
     bankDetails: ['company', 'bank', 'account'],
-    header: ['invoice', 'quotation', 'po', 'title'],
+    header: ['invoice', 'quotation', 'po', 'title', 'project', 'subject'],
   };
 
   const prefixes = sectionPrefixMap[sectionId] || [sectionId.split(/(?=[A-Z])|[_-]/)[0]];
+
+  // NEW: Prioritize Exact Prefix+Key Combinations
+  // This prevents "contact" matching "contactPerson" fuzzily before checking for "contact" exactly
+  for (const p of prefixes) {
+    for (const v of Array.from(altVariants)) {
+      const exactMatch = keys.find((k) => k.toLowerCase() === (p + v).toLowerCase());
+      if (exactMatch) return data[exactMatch];
+    }
+  }
+
   for (const p of prefixes) {
     const match = keys.find((k) => k.toLowerCase().includes(p) && k.toLowerCase().includes(strippedLower));
     if (match) return data[match];
+  }
+
+  // second pass with variants
+  for (const p of prefixes) {
+    for (const v of Array.from(altVariants)) {
+      const match = keys.find((k) => k.toLowerCase().includes(p) && k.toLowerCase().includes(v));
+      if (match) return data[match];
+    }
   }
 
   // final fallback: any key that contains the stripped fragment (prefer earlier keys)
