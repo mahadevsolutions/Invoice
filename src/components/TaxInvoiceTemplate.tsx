@@ -10,10 +10,8 @@ import {
   getFieldLabel,
   getSectionLabel,
   getVisibleColumns,
-  isFieldVisible,
   isSectionVisible,
   getOrderedFields,
-  getFieldConfig,
   getSectionConfig,
   resolveTemplateConfig,
 } from 'src/components/template-editor/field-types';
@@ -90,10 +88,8 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
     [resolvedConfig, gstType],
   );
 
-  // --- NEW: sync HSN visibility with tableColumns ---
   const showHSN = tableColumns.some((col) => col.key === 'hsn');
 
-  // map section styles to classes
   const headerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'header')?.style);
   const headerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'header')?.style);
   const companyClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'companyDetails')?.style);
@@ -104,10 +100,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const buyerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'buyer')?.style);
   const orderMetaClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
   const orderMetaInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
-  const amountInWordsClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'amountInWords')?.style);
-  const amountInWordsInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'amountInWords')?.style);
-  const bankDetailsClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'bankDetails')?.style);
-  const bankDetailsInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'bankDetails')?.style);
 
   const formatCurrency = (value: unknown): string => {
     const numeric = toNumber(value) ?? 0;
@@ -132,7 +124,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
     if (columnKey === 'service' || columnKey === 'description') {
       const title = rawValue || item.service || item.description || '';
       const description = item.description && item.description !== title ? item.description : '';
-      // if HSN column is hidden in tableColumns, show HSN inside the service/description cell
       const hsnWithinCell = !tableColumns.some((col) => col.key === 'hsn') && item.hsn;
 
       return (
@@ -180,6 +171,10 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const renderField = (sectionId: string, field: any) =>
     renderFieldNode({ sectionId, field, config: resolvedConfig, data: invoiceData, currency });
 
+  const personName = String(invoiceData.authorizedPersonName ?? resolvedConfig.authorizedBy?.personName ?? '').trim();
+  const designation = String(invoiceData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation ?? '').trim();
+  const hasAuthText = personName.length > 0 || designation.length > 0;
+
   return (
     <div className="bg-white p-6 font-sans text-xs text-black">
       <style>{`
@@ -187,12 +182,17 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
           .print-avoid-break { break-inside: avoid; }
         }
         .text-xxs { font-size: 0.65rem; }
+        .auth-by-tight { margin-top: 6px !important; padding-top: 0px !important; line-height: 1.15 !important; }
+        .auth-by-tight * { line-height: 1.15 !important; }
+        .auth-by-tight p { margin-top: 2px !important; margin-bottom: 0px !important; }
+        .auth-by-tight .auth-by-name { margin-top: 8px !important; }
+        .auth-by-tight .auth-by-des { margin-top: 4px !important; }
       `}</style>
 
       {headerVisible && (
         <header className={`mb-4 text-center avoid-break ${headerClass}`} style={headerInline}>
-            {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
-          </header>
+          {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
+        </header>
       )}
 
       {companySectionVisible && (
@@ -258,7 +258,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                   >
                     {tableColumns.map((column) => {
                       const content = renderCell(item, column.key, column.formatter || 'text');
-                      const isNumeric = column.formatter === 'currency' || column.formatter === 'number';
                       return (
                         <td
                           key={column.key}
@@ -282,12 +281,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
             <table className="w-full border-collapse text-xs">
               <thead className="bg-black-200 uppercase tracking-wide text-bold text-solid black">
                 <tr className="avoid-break">
-
-                  {/* HSN column synced with first table */}
                   {showHSN && (
                     <th className="bg-violet-400 p-2 text-center">HSN</th>
                   )}
-
                   <th className="bg-violet-400 p-2 text-center">Taxable Value</th>
 
                   {gstType === 'IGST' ? (
@@ -313,7 +309,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                     key={hsn}
                     className={`avoid-break border-t border-black-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
                   >
-                    {/* HSN synced with first table */}
                     {showHSN && (
                       <td className="border border-black-200 p-2 text-center">{hsn}</td>
                     )}
@@ -380,7 +375,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                     value = formatCurrency(payableTotal);
                     break;
                   default:
-                    // fallback to invoiceData or default
                     value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
                 }
 
@@ -397,37 +391,37 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       )}
 
       {amountInWordsVisible && (
-        <>
-          <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
-            {getOrderedFields(resolvedConfig, 'amountInWords').map((field) => {
-              if (field.visible === false) return null;
-              const label = getFieldLabel(resolvedConfig, 'amountInWords', field.key, field.label || '');
-              let value: any = '';
-              if (field.key === 'amountChargeableLabel') value = amountInWords;
-              else if (field.key === 'taxAmountLabel') value = taxInWords;
-              else value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
-              return (
-                <p key={field.key} className="font-bold text-gray-800">
-                  {label} 
-                  <span className="font-normal text-gray-700">{value}</span>
-                </p>
-              );
-            })}
-          </section>
-        </>
+        <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
+          {getOrderedFields(resolvedConfig, 'amountInWords').map((field) => {
+            if (field.visible === false) return null;
+            const label = getFieldLabel(resolvedConfig, 'amountInWords', field.key, field.label || '');
+            let value: any = '';
+            if (field.key === 'amountChargeableLabel') value = amountInWords;
+            else if (field.key === 'taxAmountLabel') value = taxInWords;
+            else value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
+            return (
+              <p key={field.key} className="font-bold text-gray-800">
+                {label}
+                <span className="font-normal text-gray-700">{value}</span>
+              </p>
+            );
+          })}
+        </section>
       )}
 
-      <AuthorizedBy
+      <div className={hasAuthText ? 'auth-by-tight' : ''}>
+        <AuthorizedBy
           signatureUrl={invoiceData.authorizedSignatureUrl ?? resolvedConfig.authorizedBy?.signatureUrl}
           personName={invoiceData.authorizedPersonName ?? resolvedConfig.authorizedBy?.personName}
           designation={invoiceData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation}
           align={(resolvedConfig.authorizedBy?.align as any) ?? 'right'}
           label={resolvedConfig.authorizedBy?.label}
           visible={resolvedConfig.authorizedBy?.visible !== false}
-      />
+        />
+      </div>
 
       {bankDetailsVisible && (
-        <footer className="border-t border-gray-400 pt-2 text-xs text-gray-700 avoid-break">
+        <footer className="border-t border-gray-400 pt-3 text-xs text-gray-700 avoid-break">
           <div>
             <h4 className="mb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'bankDetails', "Company's Bank Details")}
