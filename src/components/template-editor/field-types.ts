@@ -11,6 +11,22 @@ export type FieldType =
   | 'currency'
   | 'checkbox';
 
+export interface FieldStyleConfig {
+  fontFamily?: 'sans' | 'serif' | 'mono';
+  fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
+  fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
+  textColor?: string;
+  bgColor?: string;
+  align?: 'left' | 'center' | 'right';
+  padding?: string;
+  margin?: string;
+}
+
+export interface FieldDependencyConfig {
+  fieldKey: string;
+  value: string | number | boolean;
+}
+
 export interface FieldConfig {
   key: string;
   label: string;
@@ -21,23 +37,13 @@ export interface FieldConfig {
   type?: FieldType;
   placeholder?: string;
   defaultValue?: any;
-  style?: {
-    fontFamily?: 'sans' | 'serif' | 'mono';
-    fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
-    textColor?: string; // expect tailwind class like 'text-gray-700'
-    bgColor?: string; // expect tailwind class like 'bg-white'
-    align?: 'left' | 'center' | 'right';
-    padding?: string; // tailwind padding class e.g. 'p-2', 'py-1'
-    margin?: string; // tailwind margin class
-  };
-  // for select fields
+  style?: FieldStyleConfig;
   options?: string[];
-  // simple validation rules (optional)
+  dependsOn?: FieldDependencyConfig;
   validation?: {
-    pattern?: string; // regex
-    min?: number; // for numbers
-    max?: number; // for numbers
+    pattern?: string;
+    min?: number;
+    max?: number;
     customMessage?: string;
   };
 }
@@ -58,16 +64,7 @@ export interface SectionConfig {
   visible: boolean;
   order?: number;
   fields: FieldConfig[];
-  style?: {
-    fontFamily?: 'sans' | 'serif' | 'mono';
-    fontSize?: 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl';
-    fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold';
-    textColor?: string;
-    bgColor?: string;
-    align?: 'left' | 'center' | 'right';
-    padding?: string;
-    margin?: string;
-  };
+  style?: FieldStyleConfig;
 }
 
 export interface AuthorizedByConfig {
@@ -168,7 +165,6 @@ export const mergeTemplateConfig = (
         existing.order = section.order;
       }
 
-      // merge section style if present
       if (section.style) {
         existing.style = { ...(existing.style || {}), ...(section.style || {}) };
       }
@@ -181,6 +177,12 @@ export const mergeTemplateConfig = (
           existingField.visible = field.visible ?? existingField.visible;
           existingField.required = field.required ?? existingField.required;
           existingField.className = field.className || existingField.className;
+          existingField.type = field.type ?? existingField.type;
+          existingField.placeholder = field.placeholder ?? existingField.placeholder;
+          existingField.defaultValue = field.defaultValue ?? existingField.defaultValue;
+          existingField.options = field.options ?? existingField.options;
+          existingField.dependsOn = field.dependsOn ?? existingField.dependsOn;
+          existingField.validation = field.validation ?? existingField.validation;
           if (field.style) {
             existingField.style = { ...(existingField.style || {}), ...(field.style || {}) };
           }
@@ -330,6 +332,17 @@ export const getOrderedFields = (
   return normaliseOrder(section.fields);
 };
 
+export const shouldShowField = (
+  field: FieldConfig | undefined,
+  values?: Record<string, any>,
+): boolean => {
+  if (!field) return false;
+  if (field.visible === false) return false;
+  if (!field.dependsOn) return true;
+  const currentValue = values?.[field.dependsOn.fieldKey];
+  return currentValue === field.dependsOn.value;
+};
+
 export interface VisibleColumn extends ColumnConfig {}
 
 export const getVisibleColumns = (
@@ -393,6 +406,24 @@ export const createProfessionalQuotationDefaultConfig = (): TemplateConfig => ({
       { key: 'panLabel', label: 'PAN', visible: true },
       { key: 'companyLabel', label: 'Company', visible: true },
       { key: 'addressLabel', label: 'Address', visible: true },
+      {
+        key: 'shippingAddressSource',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'select',
+        defaultValue: 'Same as billing',
+        options: ['Same as billing', 'Custom'],
+      },
+      {
+        key: 'shippingAddressLabel',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'textarea',
+        dependsOn: {
+          fieldKey: 'shippingAddressSource',
+          value: 'Custom',
+        },
+      },
     ], 2),
     createSection('itemsSummary', 'Items Summary', true, [
       { key: 'totalTaxInWordsLabel', label: 'Total Tax In Words', visible: true },
@@ -437,6 +468,24 @@ export const createPurchaseOrderDefaultConfig = (): TemplateConfig => ({
     createSection('shipTo', 'Ship To', true, [
       { key: 'heading', label: 'Ship To', visible: true },
       { key: 'addressLabel', label: 'Address', visible: true },
+      {
+        key: 'shippingAddressSource',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'select',
+        defaultValue: 'Same as billing',
+        options: ['Same as billing', 'Custom'],
+      },
+      {
+        key: 'shippingAddressLabel',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'textarea',
+        dependsOn: {
+          fieldKey: 'shippingAddressSource',
+          value: 'Custom',
+        },
+      },
       { key: 'requisitionerLabel', label: 'Requisitioner', visible: true },
       { key: 'shipViaLabel', label: 'Ship Via', visible: true },
       { key: 'fobLabel', label: 'F.O.B.', visible: true },
@@ -474,8 +523,8 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
       { key: 'contactLabel', label: 'Contact', visible: true },
       { key: 'emailLabel', label: 'E-Mail', visible: true },
     ], 1),
-    createSection('consignee', 'Consignee (Ship to)', true, [
-      { key: 'heading', label: 'Consignee (Ship to)', visible: true },
+    createSection('consignee', 'Consignee (Bill By)', true, [
+      { key: 'heading', label: 'Consignee (Bill By)', visible: true },
       { key: 'gstinLabel', label: 'GSTIN/UIN', visible: true },
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },
@@ -487,6 +536,24 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },
       { key: 'contactLabel', label: 'Contact', visible: true },
+      {
+        key: 'shippingAddressSource',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'select',
+        defaultValue: 'Same as billing',
+        options: ['Same as billing', 'Custom'],
+      },
+      {
+        key: 'shippingAddressLabel',
+        label: 'Shipping Address',
+        visible: true,
+        type: 'textarea',
+        dependsOn: {
+          fieldKey: 'shippingAddressSource',
+          value: 'Custom',
+        },
+      },
     ], 3),
     createSection('orderMeta', 'Order Meta', true, [
       { key: 'invoiceNumberLabel', label: 'Invoice No.', visible: true },
