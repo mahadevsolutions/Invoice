@@ -431,45 +431,64 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               Tax Summary
             </div>
             <dl className="divide-y divide-gray-200 text-[0.8rem]">
-              {['subtotalLabel', 'cgstLabel', 'sgstLabel', 'igstLabel', 'totalTaxLabel', 'roundOffLabel', 'grandTotalLabel'].map((key) => {
-                const field = getFieldConfig(resolvedConfig, 'totals', key);
-                if (!field || field.visible === false) return null;
-                const label = getFieldLabel(resolvedConfig, 'totals', field.key, field.label || '');
-                let value: any = '';
-                switch (field.key) {
-                  case 'subtotalLabel':
-                    value = formatCurrency(subtotal);
-                    break;
-                  case 'cgstLabel':
-                    value = formatCurrency(totalCgst);
-                    break;
-                  case 'sgstLabel':
-                    value = formatCurrency(totalSgst);
-                    break;
-                  case 'igstLabel':
-                    value = formatCurrency(totalIgst);
-                    break;
-                  case 'totalTaxLabel':
-                    value = formatCurrency(totalTax);
-                    break;
-                  case 'roundOffLabel':
-                    if (roundOff === 0 && invoiceData.roundOff == null) return null;
-                    value = formatCurrency(roundOff);
-                    break;
-                  case 'grandTotalLabel':
-                    value = formatCurrency(payableTotal);
-                    break;
-                  default:
-                    value = invoiceData[field.key] ?? field.defaultValue ?? '';
-                }
+              {(() => {
+                const totalRows = [
+                  {
+                    key: 'subtotalLabel',
+                    visible: true,
+                    label: getFieldLabel(resolvedConfig, 'totals', 'subtotalLabel', 'Subtotal'),
+                    value: formatCurrency(subtotal),
+                  },
+                  {
+                    key: 'cgstLabel',
+                    visible: gstType === 'CGST_SGST',
+                    label: getFieldLabel(resolvedConfig, 'totals', 'cgstLabel', 'CGST'),
+                    value: formatCurrency(totalCgst),
+                  },
+                  {
+                    key: 'sgstLabel',
+                    visible: gstType === 'CGST_SGST',
+                    label: getFieldLabel(resolvedConfig, 'totals', 'sgstLabel', 'SGST'),
+                    value: formatCurrency(totalSgst),
+                  },
+                  {
+                    key: 'igstLabel',
+                    visible: gstType === 'IGST',
+                    label: getFieldLabel(resolvedConfig, 'totals', 'igstLabel', 'IGST'),
+                    value: formatCurrency(totalIgst),
+                  },
+                  {
+                    key: 'totalTaxLabel',
+                    visible: true,
+                    label: getFieldLabel(resolvedConfig, 'totals', 'totalTaxLabel', 'Total Tax'),
+                    value: formatCurrency(totalTax),
+                  },
+                  {
+                    key: 'roundOffLabel',
+                    visible: !(roundOff === 0 && invoiceData.roundOff == null),
+                    label: getFieldLabel(resolvedConfig, 'totals', 'roundOffLabel', 'Round Off'),
+                    value: formatCurrency(roundOff),
+                  },
+                  {
+                    key: 'grandTotalLabel',
+                    visible: true,
+                    label: getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Grand Total'),
+                    value: formatCurrency(payableTotal),
+                  },
+                ];
 
-                return (
-                  <div key={field.key} className="flex items-center justify-between px-4 py-2">
-                    <dt className="text-gray-600">{label}</dt>
-                    <dd className="font-semibold text-gray-900">{value}</dd>
-                  </div>
-                );
-              })}
+                return totalRows.map((row) => {
+                  const field = getFieldConfig(resolvedConfig, 'totals', row.key);
+                  if (!field || field.visible === false || !row.visible) return null;
+
+                  return (
+                    <div key={row.key} className="flex items-center justify-between px-4 py-2">
+                      <dt className="text-gray-600">{row.label}</dt>
+                      <dd className="font-semibold text-gray-900">{row.value}</dd>
+                    </div>
+                  );
+                });
+              })()}
             </dl>
           </div>
         </section>
@@ -517,9 +536,11 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               .filter(Boolean)
               .map((field) => renderField('bankDetails', field))}
           </div>
-          <div className="mt-4 text-center text-[11px] text-gray-600">
-            {systemGeneratedFooterText}
-          </div>
+          {systemGeneratedFooterText ? (
+            <div className="mt-3 whitespace-pre-line text-center text-[11px] text-gray-600">
+              {systemGeneratedFooterText}
+            </div>
+          ) : null}
         </footer>
       )}
     </div>
