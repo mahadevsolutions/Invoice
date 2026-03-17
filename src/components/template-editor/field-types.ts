@@ -424,6 +424,16 @@ export const createProfessionalQuotationDefaultConfig = (): TemplateConfig => ({
           value: 'Custom',
         },
       },
+      {
+        key: 'shippingAddressContactLabel',
+        label: 'Shipping Contact Number',
+        visible: true,
+        type: 'text',
+        dependsOn: {
+          fieldKey: 'shippingAddressSource',
+          value: 'Custom',
+        },
+      },
     ], 2),
     createSection('itemsSummary', 'Items Summary', true, [
       { key: 'totalTaxInWordsLabel', label: 'Total Tax In Words', visible: true },
@@ -486,6 +496,16 @@ export const createPurchaseOrderDefaultConfig = (): TemplateConfig => ({
           value: 'Custom',
         },
       },
+      {
+        key: 'shippingAddressContactLabel',
+        label: 'Shipping Contact Number',
+        visible: true,
+        type: 'text',
+        dependsOn: {
+          fieldKey: 'shippingAddressSource',
+          value: 'Custom',
+        },
+      },
       { key: 'requisitionerLabel', label: 'Requisitioner', visible: true },
       { key: 'shipViaLabel', label: 'Ship Via', visible: true },
       { key: 'fobLabel', label: 'F.O.B.', visible: true },
@@ -523,8 +543,8 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
       { key: 'contactLabel', label: 'Contact', visible: true },
       { key: 'emailLabel', label: 'E-Mail', visible: true },
     ], 1),
-    createSection('consignee', 'Consignee (Ship To)', true, [
-      { key: 'heading', label: 'Consignee (Ship To)', visible: true },
+    createSection('consignee', 'Billed By', true, [
+      { key: 'heading', label: 'Billed By', visible: true },
       { key: 'gstinLabel', label: 'GSTIN/UIN', visible: true },
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },
@@ -536,28 +556,12 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },
       { key: 'contactLabel', label: 'Contact', visible: true },
-      {
-        key: 'shippingAddressSource',
-        label: 'Shipping Address',
-        visible: true,
-        type: 'select',
-        defaultValue: 'Same as billing',
-        options: ['Same as billing', 'Custom'],
-      },
-      {
-        key: 'shippingAddressLabel',
-        label: 'Shipping Address',
-        visible: true,
-        type: 'textarea',
-        dependsOn: {
-          fieldKey: 'shippingAddressSource',
-          value: 'Custom',
-        },
-      },
     ], 3),
     createSection('orderMeta', 'Order Meta', true, [
       { key: 'invoiceNumberLabel', label: 'Invoice No.', visible: true },
       { key: 'invoiceDateLabel', label: 'Dated', visible: true },
+      { key: 'shippingAddressLabel', label: 'Shipping Address', visible: true, type: 'textarea' },
+      { key: 'shippingAddressContactLabel', label: 'Shipping Contact Number', visible: true, type: 'text' },
       { key: 'deliveryNoteLabel', label: 'Delivery Note', visible: true },
       { key: 'buyersOrderLabel', label: "Buyer's Order No.", visible: true },
       { key: 'dispatchDocLabel', label: 'Dispatch Doc No.', visible: true },

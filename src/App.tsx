@@ -60,7 +60,7 @@ export const VISUAL_TEMPLATES = {
 };
 
 const defaultLogoUrl =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
 
 const BANK_DEFAULTS = {
   companyBankName: 'AXIS BANK',
@@ -102,6 +102,7 @@ const INVOICE_TEMPLATE = {
     consigneeContact: '+91-84668 88128',
     shippingAddressSource: 'Same as billing',
     shippingAddressLabel: '',
+    shippingAddressContactLabel: '',
     invoiceTitle: 'Tax Invoice',
     projectSubject: 'e-Invoice',
     date: '3-Nov-25',
@@ -172,6 +173,7 @@ const PURCHASE_ORDER_TEMPLATE = {
     shippingCost: 50,
     shippingAddressSource: 'Custom',
     shippingAddressLabel: 'MAHADEV SOLUTIONS\n123 Tech Road\nVisakhapatnam, AP 530001',
+    shippingAddressContactLabel: '+91 9030602967',
     footerDetails: '',
   },
 };
@@ -221,6 +223,7 @@ const QUOTATION_TEMPLATE = {
     shippingCost: 0,
     shippingAddressSource: 'Same as billing',
     shippingAddressLabel: '',
+    shippingAddressContactLabel: '',
     gstType: 'CGST/SGST',
     globalTaxRate: 18,
     footerDetails: '',
@@ -391,6 +394,16 @@ export default function App() {
       '';
   }
 
+  if (
+    effectivePreviewData.shippingAddressSource === 'Same as billing' &&
+    !effectivePreviewData.shippingAddressContactLabel
+  ) {
+    effectivePreviewData.shippingAddressContactLabel =
+      effectivePreviewData.clientPhone ||
+      effectivePreviewData.consigneeContact ||
+      '';
+  }
+
   effectivePreviewData.footerDetails = buildFooterLine(effectivePreviewData);
 
   const getPlaceholderForKey = (key: string, fallback?: string) => {
@@ -411,6 +424,8 @@ export default function App() {
       if (key === 'shippingAddressSource' && value === 'Same as billing') {
         next.shippingAddressLabel =
           next.clientAddress || next.deliveryAddress || next.consigneeAddress || '';
+        next.shippingAddressContactLabel =
+          next.clientPhone || next.consigneeContact || '';
       }
       if (key === 'clientAddress' && next.shippingAddressSource === 'Same as billing') {
         next.shippingAddressLabel = value;
@@ -420,6 +435,12 @@ export default function App() {
       }
       if (key === 'consigneeAddress' && next.shippingAddressSource === 'Same as billing') {
         next.shippingAddressLabel = value;
+      }
+      if (key === 'clientPhone' && next.shippingAddressSource === 'Same as billing') {
+        next.shippingAddressContactLabel = value;
+      }
+      if (key === 'consigneeContact' && next.shippingAddressSource === 'Same as billing') {
+        next.shippingAddressContactLabel = value;
       }
       return next;
     });
@@ -476,6 +497,13 @@ export default function App() {
     ) {
       normalized.shippingAddressLabel =
         normalized.clientAddress || normalized.deliveryAddress || normalized.consigneeAddress || '';
+    }
+    if (
+      normalized.shippingAddressSource === 'Same as billing' &&
+      !normalized.shippingAddressContactLabel
+    ) {
+      normalized.shippingAddressContactLabel =
+        normalized.clientPhone || normalized.consigneeContact || '';
     }
     setInvoiceData(normalized);
     setTemplate(normalized.template || templateData.template || Object.values(VISUAL_TEMPLATES)[0]);
@@ -751,10 +779,9 @@ export default function App() {
                 </div>
 
                 
-
                 {activeTemplateName === 'Invoice' && (
                   <div className="space-y-4 mb-6">
-                    <h3 className="font-semibold text-lg border-b pb-2">Consignee (Ship To) Details</h3>
+                    <h3 className="font-semibold text-lg border-b pb-2">Billed By</h3>
 
                     <input
                       type="text"
@@ -804,35 +831,6 @@ export default function App() {
                         className="w-1/2 p-2 border rounded-md"
                       />
                     </div>
-
-                    {isFieldAllowed('shippingAddressSource') && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {fieldMap.shippingAddressSource?.label || 'Shipping Address'}
-                        </label>
-                        <select
-                          value={invoiceData.shippingAddressSource || 'Same as billing'}
-                          onChange={(e) => updateInvoiceField('shippingAddressSource', e.target.value)}
-                          className="w-full p-3 border rounded-md bg-white"
-                        >
-                          {getFieldOptions('shippingAddressSource', ['Same as billing', 'Custom']).map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {isFieldAllowed('shippingAddressLabel') && (
-                      <textarea
-                        placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
-                        value={invoiceData.shippingAddressLabel || ''}
-                        onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
-                        className="w-full p-2 border rounded-md"
-                        rows={2}
-                      />
-                    )}
                   </div>
                 )}
 
@@ -843,7 +841,7 @@ export default function App() {
                       : activeTemplateName === 'Quotation'
                       ? 'Billed To'
                       : activeTemplateName === 'Invoice'
-                      ? 'Buyer (Bill To) Details'
+                      ? 'Billed To'
                       : 'Client Details'}
                   </h3>
 
@@ -932,13 +930,22 @@ export default function App() {
                       )}
 
                       {isFieldAllowed('shippingAddressLabel') && (
-                        <textarea
-                          placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
-                          value={invoiceData.shippingAddressLabel || ''}
-                          onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
-                          className="w-full p-2 border rounded-md"
-                          rows={2}
-                        />
+                        <>
+                          <textarea
+                            placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
+                            value={invoiceData.shippingAddressLabel || ''}
+                            onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
+                            className="w-full p-2 border rounded-md"
+                            rows={2}
+                          />
+                          <input
+                            type="text"
+                            placeholder={getPlaceholderForKey('shippingAddressContactLabel', 'Shipping Contact Number')}
+                            value={invoiceData.shippingAddressContactLabel || ''}
+                            onChange={(e) => updateInvoiceField('shippingAddressContactLabel', e.target.value)}
+                            className="w-full p-2 border rounded-md"
+                          />
+                        </>
                       )}
 
                       <div className="flex space-x-2 mt-2">
@@ -960,6 +967,7 @@ export default function App() {
                     </>
                   )}
                 </div>
+
 
                 {activeTemplateName === 'Purchase Order' && (
                   <div className="space-y-4 mb-6">
@@ -985,24 +993,42 @@ export default function App() {
                     )}
 
                     {isFieldAllowed('shippingAddressLabel') ? (
-                      <textarea
-                        placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
-                        value={invoiceData.shippingAddressLabel || ''}
-                        onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
-                        className="w-full p-2 border rounded-md"
-                        rows={2}
-                      />
+                      <>
+                        <textarea
+                          placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
+                          value={invoiceData.shippingAddressLabel || ''}
+                          onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                          rows={2}
+                        />
+                        <input
+                          type="text"
+                          placeholder={getPlaceholderForKey('shippingAddressContactLabel', 'Shipping Contact Number')}
+                          value={invoiceData.shippingAddressContactLabel || ''}
+                          onChange={(e) => updateInvoiceField('shippingAddressContactLabel', e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                        />
+                      </>
                     ) : (
-                      <textarea
-                        placeholder="Shipping Address"
-                        value={invoiceData.shippingAddressLabel || invoiceData.deliveryAddress || ''}
-                        onChange={(e) => {
-                          updateInvoiceField('deliveryAddress', e.target.value);
-                          updateInvoiceField('shippingAddressLabel', e.target.value);
-                        }}
-                        className="w-full p-2 border rounded-md"
-                        rows={2}
-                      />
+                      <>
+                        <textarea
+                          placeholder="Shipping Address"
+                          value={invoiceData.shippingAddressLabel || invoiceData.deliveryAddress || ''}
+                          onChange={(e) => {
+                            updateInvoiceField('deliveryAddress', e.target.value);
+                            updateInvoiceField('shippingAddressLabel', e.target.value);
+                          }}
+                          className="w-full p-2 border rounded-md"
+                          rows={2}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Shipping Contact Number"
+                          value={invoiceData.shippingAddressContactLabel || ''}
+                          onChange={(e) => updateInvoiceField('shippingAddressContactLabel', e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                        />
+                      </>
                     )}
                   </div>
                 )}
@@ -1050,6 +1076,30 @@ export default function App() {
                       className="w-1/2 p-2 border rounded-md"
                     />
                   </div>
+
+                  {(activeTemplateName === 'Invoice' || activeTemplateName === 'Purchase Order') && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {fieldMap.shippingAddressLabel?.label || 'Shipping Address'}
+                        </label>
+                        <textarea
+                          placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
+                          value={invoiceData.shippingAddressLabel || ''}
+                          onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
+                          className="w-full p-2 border rounded-md"
+                          rows={2}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={getPlaceholderForKey('shippingAddressContactLabel', 'Shipping Contact Number')}
+                        value={invoiceData.shippingAddressContactLabel || ''}
+                        onChange={(e) => updateInvoiceField('shippingAddressContactLabel', e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                      />
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4 mb-6">
