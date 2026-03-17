@@ -104,7 +104,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const invoiceData = data || {};
   const resolvedConfig = useMemo(
     () => resolveTemplateConfig(createProfessionalQuotationDefaultConfig, templateConfig),
-    [templateConfig],
+    [templateConfig]
   );
 
   const currency = currencySymbol || invoiceData.currencySymbol || '₹';
@@ -114,6 +114,12 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const totalTax = (totalCgst || 0) + (totalSgst || 0) + (totalIgst || 0);
   const totalTaxInWords = numberToWords(totalTax);
   const totalAmountInWords = numberToWords(grandTotal || 0);
+  const documentNumberLabel = invoiceData.documentNumberLabel || 'Quotation Number';
+  const documentDateLabel = invoiceData.documentDateLabel || 'Date';
+  const partySectionLabel = invoiceData.partySectionLabel || 'Quotation To';
+  const systemGeneratedFooterText =
+    invoiceData.systemGeneratedFooterText ||
+    'This is an electronically generated document, no signature is required.';
 
   const tableColumns = useMemo(
     () =>
@@ -124,7 +130,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
           if ((column.key === 'cgst' || column.key === 'sgst') && gstType !== 'CGST_SGST') return false;
           return column.visible !== false;
         }),
-    [resolvedConfig, gstType],
+    [resolvedConfig, gstType]
   );
 
   const getColumnAlignment = (column: ColumnConfig): 'text-left' | 'text-right' | 'text-center' => {
@@ -153,7 +159,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const renderCell = (
     item: any,
     columnKey: string,
-    formatter: ColumnConfig['formatter'],
+    formatter: ColumnConfig['formatter']
   ): React.ReactNode => {
     const rawValue = getColumnValue(item, columnKey, invoiceData);
 
@@ -165,9 +171,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       return (
         <div className="space-y-1">
           <span className="block font-bold text-gray-800">{String(title || '')}</span>
-          {description ? (
-            <span className="block text-[11px] text-gray-600">{description}</span>
-          ) : null}
+          {description ? <span className="block text-[11px] text-gray-600">{description}</span> : null}
           {productCode ? (
             <span className="block text-[11px] font-medium text-gray-700">Product Code: {productCode}</span>
           ) : null}
@@ -204,11 +208,11 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const totalsSectionVisible = isSectionVisible(resolvedConfig, 'totals');
   const notesSectionVisible = isSectionVisible(resolvedConfig, 'notes') && Boolean(invoiceData.notes);
 
-  const bankFirmName = String(invoiceData.bankFirmName ?? 'MAHADEV SOLUTIONS');
-  const bankAccountNo = String(invoiceData.bankAccountNo ?? '925020045861677');
-  const bankCustomerId = String(invoiceData.bankCustomerId ?? '977860708');
-  const bankBranch = String(invoiceData.bankBranch ?? 'KISMATPUR');
-  const bankIfsc = String(invoiceData.bankIfsc ?? 'UTIB0005921');
+  const bankFirmName = String(invoiceData.companyBankName ?? invoiceData.bankFirmName ?? 'MAHADEV SOLUTIONS');
+  const bankAccountNo = String(invoiceData.companyAccountNo ?? invoiceData.bankAccountNo ?? '925020045861677');
+  const bankCustomerId = String(invoiceData.companyCustomerId ?? invoiceData.bankCustomerId ?? '977860708');
+  const bankBranch = String(invoiceData.companyBankBranch ?? invoiceData.bankBranch ?? 'KISMATPUR');
+  const bankIfsc = String(invoiceData.companyIfscCode ?? invoiceData.bankIfsc ?? 'UTIB0005921');
 
   return (
     <div className="bg-white p-6 font-sans text-xs text-black">
@@ -220,7 +224,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       `}</style>
 
       {headerVisible && (
-        <header className="mb-4 flex items-start justify-between pb-4 print-avoid-break">
+        <header className="print-avoid-break mb-4 flex items-start justify-between pb-4">
           <div className="w-1/2 space-y-3">
             {headerTitleVisible && (
               <h1 className="text-3xl font-bold uppercase text-blue-700">
@@ -230,14 +234,12 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
             <div className="space-y-1">
               {headerNumberVisible && (
                 <p>
-                  <strong>{getFieldLabel(resolvedConfig, 'header', 'quotationNumberLabel', 'Quotation #')}:</strong>{' '}
-                  {invoiceData.quotationNumber || '---'}
+                  <strong>{documentNumberLabel}:</strong> {invoiceData.quotationNumber || '---'}
                 </p>
               )}
               {headerDateVisible && (
                 <p>
-                  <strong>{getFieldLabel(resolvedConfig, 'header', 'quotationDateLabel', 'Quotation Date')}:</strong>{' '}
-                  {invoiceData.date || '---'}
+                  <strong>{documentDateLabel}:</strong> {invoiceData.date || '---'}
                 </p>
               )}
             </div>
@@ -254,7 +256,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       )}
 
       {quotationFromVisible && (
-        <section className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-2 bg-green-200 p-4 rounded-lg">
+        <section className="mb-4 grid grid-cols-1 gap-8 rounded-lg bg-green-200 p-4 md:grid-cols-2">
           <div>
             <h3 className="mb-2 border-b border-gray-600 pb-1 text-sm font-bold uppercase">
               {getSectionLabel(resolvedConfig, 'quotationFrom', 'Quotation From')}
@@ -298,7 +300,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
           {quotationForVisible && (
             <div>
               <h3 className="mb-2 border-b border-gray-600 pb-1 text-sm font-bold uppercase">
-                {getSectionLabel(resolvedConfig, 'quotationFor', 'Quotation For')}
+                {partySectionLabel}
               </h3>
               <p className="text-base font-bold text-gray-900">{invoiceData.clientName || '---'}</p>
               {invoiceData.clientCompany && isFieldVisible(resolvedConfig, 'quotationFor', 'companyLabel') && (
@@ -334,6 +336,19 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
                   {invoiceData.clientPan || '---'}
                 </p>
               )}
+              {(invoiceData.shippingAddressLabel || invoiceData.shippingAddressContactLabel) && (
+                <div className="mt-3">
+                  <h4 className="text-xs font-bold uppercase text-gray-800">Shipping Address</h4>
+                  {invoiceData.shippingAddressLabel ? (
+                    <p className="mt-1 whitespace-pre-line text-gray-700">{invoiceData.shippingAddressLabel}</p>
+                  ) : null}
+                  {invoiceData.shippingAddressContactLabel ? (
+                    <p className="mt-1 text-gray-700">
+                      <strong>Contact:</strong> {invoiceData.shippingAddressContactLabel}
+                    </p>
+                  ) : null}
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -342,12 +357,12 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       <section className="print-avoid-break">
         <div className="overflow-hidden rounded border border-gray-300">
           <table className="w-full border-collapse text-left text-xs">
-            <thead className="bg-gray-200 uppercase tracking-wide font-bold text-black">
+            <thead className="bg-gray-200 font-bold uppercase tracking-wide text-black">
               <tr>
                 {tableColumns.map((column) => (
                   <th
                     key={column.key}
-                    className="text-center bg-violet-400 p-2"
+                    className="bg-violet-400 p-2 text-center"
                     style={column.width ? { width: `${column.width}%` } : undefined}
                   >
                     {column.label}
@@ -389,9 +404,9 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
       </section>
 
       {totalsSectionVisible && (
-        <section className="mt-4 flex justify-end print-avoid-break">
+        <section className="print-avoid-break mt-4 flex justify-end">
           <div className="w-72 text-sm">
-            <div className="rounded border border-gray-200 overflow-hidden shadow-sm bg-white">
+            <div className="overflow-hidden rounded border border-gray-200 bg-white shadow-sm">
               <div className="divide-y divide-gray-200">
                 {isFieldVisible(resolvedConfig, 'totals', 'amountLabel') && (
                   <div className="flex items-center justify-between px-4 py-2 text-gray-700">
@@ -433,7 +448,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
               </div>
 
               {isFieldVisible(resolvedConfig, 'totals', 'grandTotalLabel') && (
-                <div className="bg-gray-900 px-4 py-2.5 flex items-center justify-between text-white">
+                <div className="flex items-center justify-between bg-gray-900 px-4 py-2.5 text-white">
                   <span className="text-sm font-semibold">{getFieldLabel(resolvedConfig, 'totals', 'grandTotalLabel', 'Total (INR)')}</span>
                   <span className="text-sm font-bold">{formatCurrency(grandTotal)}</span>
                 </div>
@@ -461,7 +476,7 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
         />
       </div>
 
-      <footer className="mt-4 border-t border-gray-400 pt-3 text-xs text-gray-700 print-avoid-break">
+      <footer className="print-avoid-break mt-4 border-t border-gray-400 pt-3 text-xs text-gray-700">
         <div>
           <h4 className="mb-1 font-bold text-gray-900">
             {String(invoiceData.bankDetailsTitle ?? "Company's Bank Details")}
@@ -482,10 +497,13 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
             <span className="font-bold">{String(invoiceData.bankIfscLabel ?? 'IFSC CODE :')}</span> {bankIfsc}
           </p>
         </div>
+        <div className="mt-4 text-center text-[11px] text-gray-600">
+          {systemGeneratedFooterText}
+        </div>
       </footer>
 
       {notesSectionVisible && (
-        <section className="mt-8 print-avoid-break">
+        <section className="print-avoid-break mt-8">
           <h4 className="mb-1 text-sm font-bold text-gray-800">
             {getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Terms & Conditions')}
           </h4>

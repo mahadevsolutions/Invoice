@@ -60,7 +60,7 @@ export const VISUAL_TEMPLATES = {
 };
 
 const defaultLogoUrl =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
 
 const BANK_DEFAULTS = {
   companyBankName: 'AXIS BANK',
@@ -75,7 +75,7 @@ const INVOICE_COMPANY_ADDRESS =
   '2-1-38, ROAD NO 4, PLOT NO 38, SRI VENKATESWARA\nCOLONY, BANDLAGUDA JAGIR, HYDERABAD';
 const INVOICE_COMPANY_EMAIL = 'mahadevsolutions@outlook.com';
 const INVOICE_COMPANY_PHONE = '6304569149';
-const INVOICE_FOOTER_TEXT = 'This is an electronically generated document, no signature is required.';
+const SYSTEM_GENERATED_FOOTER_TEXT = 'This is an electronically generated document, no signature is required.';
 
 const INVOICE_TEMPLATE = {
   name: 'Invoice',
@@ -256,6 +256,52 @@ const TEMPLATE_ALIASES: Record<string, string> = {
   [VISUAL_TEMPLATES.DIGITAL_MARKETING]: VISUAL_TEMPLATES.TAX_INVOICE,
 };
 
+const getDocumentMode = (activeTemplateName: string, data: any, selectedTemplate: string) => {
+  const title = String(data?.invoiceTitle || '').toLowerCase();
+
+  if (
+    activeTemplateName === 'Purchase Order' ||
+    selectedTemplate === VISUAL_TEMPLATES.PURCHASE_ORDER ||
+    title.includes('purchase order')
+  ) {
+    return 'purchaseOrder';
+  }
+
+  if (
+    activeTemplateName === 'Quotation' ||
+    selectedTemplate === VISUAL_TEMPLATES.PROFESSIONAL_QUOTATION ||
+    title.includes('quotation')
+  ) {
+    return 'quotation';
+  }
+
+  return 'invoice';
+};
+
+const getDocumentLabels = (mode: 'invoice' | 'purchaseOrder' | 'quotation') => {
+  if (mode === 'purchaseOrder') {
+    return {
+      numberLabel: 'Purchase Order Number',
+      dateLabel: 'Date',
+      billedToLabel: 'Vendor',
+    };
+  }
+
+  if (mode === 'quotation') {
+    return {
+      numberLabel: 'Quotation Number',
+      dateLabel: 'Date',
+      billedToLabel: 'Quotation To',
+    };
+  }
+
+  return {
+    numberLabel: 'Invoice Number',
+    dateLabel: 'Invoice Date',
+    billedToLabel: 'Billed To',
+  };
+};
+
 export default function App() {
   interface Item {
     service: string;
@@ -292,7 +338,14 @@ export default function App() {
   };
 
   const buildFooterLine = (data: any) => {
-    const userFooter = String(data?.footerDetails || '').trim();
+    const rawUserFooter = String(data?.footerDetails || '').trim();
+    const userFooter = rawUserFooter
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter((line) => line !== SYSTEM_GENERATED_FOOTER_TEXT)
+      .join('\n');
+
     const authorizedPresent = hasAuthorizedDetails(data);
 
     const authName = String(data?.authorizedPersonName || '').trim();
@@ -307,19 +360,24 @@ export default function App() {
       companyEmail: data?.companyEmail,
     }).trim();
 
-    if (!authorizedPresent) {
-      if (userFooter) return `${userFooter}\n${INVOICE_FOOTER_TEXT}`;
-      return INVOICE_FOOTER_TEXT;
+    const lines: string[] = [];
+
+    if (authorizedPresent) {
+      if (userFooter) {
+        lines.push(userFooter);
+      } else {
+        if (companyLine) lines.push(companyLine);
+        if (authLine) lines.push(authLine);
+      }
+    } else {
+      if (userFooter) {
+        lines.push(userFooter);
+      }
     }
 
-    if (userFooter) {
-      if (authLine) return `${userFooter}\n${authLine}`;
-      return userFooter;
-    }
+    lines.push(SYSTEM_GENERATED_FOOTER_TEXT);
 
-    if (authLine && companyLine) return `${companyLine}\n${authLine}`;
-    if (authLine) return authLine;
-    return companyLine || '';
+    return lines.filter(Boolean).join('\n');
   };
 
   useEffect(() => {
@@ -404,7 +462,15 @@ export default function App() {
       '';
   }
 
+  const documentMode = getDocumentMode(activeTemplateName, effectivePreviewData, template);
+  const documentLabels = getDocumentLabels(documentMode);
+
   effectivePreviewData.footerDetails = buildFooterLine(effectivePreviewData);
+  effectivePreviewData.documentMode = documentMode;
+  effectivePreviewData.documentNumberLabel = documentLabels.numberLabel;
+  effectivePreviewData.documentDateLabel = documentLabels.dateLabel;
+  effectivePreviewData.partySectionLabel = documentLabels.billedToLabel;
+  effectivePreviewData.systemGeneratedFooterText = SYSTEM_GENERATED_FOOTER_TEXT;
 
   const getPlaceholderForKey = (key: string, fallback?: string) => {
     const f = fieldMap[key];
@@ -532,6 +598,7 @@ export default function App() {
   const handleGeneratePdf = async () => {
     setIsGenerating(true);
     const footerLine = buildFooterLine(invoiceData);
+    const currentDocumentMode = getDocumentMode(activeTemplateName, invoiceData, template);
 
     try {
       const invoiceMeta = {
@@ -542,6 +609,7 @@ export default function App() {
         consigneeName: invoiceData?.consigneeName,
         companyName: invoiceData?.companyName,
         footerDetails: footerLine,
+        documentMode: currentDocumentMode,
       };
 
       await generatePdf(
@@ -778,7 +846,6 @@ export default function App() {
                   )}
                 </div>
 
-                
                 {activeTemplateName === 'Invoice' && (
                   <div className="space-y-4 mb-6">
                     <h3 className="font-semibold text-lg border-b pb-2">Billed By</h3>
@@ -839,9 +906,9 @@ export default function App() {
                     {activeTemplateName === 'Purchase Order'
                       ? 'Vendor / Supplier Details'
                       : activeTemplateName === 'Quotation'
-                      ? 'Billed To'
+                      ? documentLabels.billedToLabel
                       : activeTemplateName === 'Invoice'
-                      ? 'Billed To'
+                      ? documentLabels.billedToLabel
                       : 'Client Details'}
                   </h3>
 
@@ -967,7 +1034,6 @@ export default function App() {
                     </>
                   )}
                 </div>
-
 
                 {activeTemplateName === 'Purchase Order' && (
                   <div className="space-y-4 mb-6">

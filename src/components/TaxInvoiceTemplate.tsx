@@ -72,7 +72,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const invoiceData = data || {};
   const resolvedConfig = useMemo(
     () => resolveTemplateConfig(createTaxInvoiceDefaultConfig, templateConfig),
-    [templateConfig],
+    [templateConfig]
   );
 
   const currency = currencySymbol || invoiceData.currencySymbol || '₹';
@@ -83,22 +83,39 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const totalTax = (totalCgst || 0) + (totalSgst || 0) + (totalIgst || 0);
   const amountInWords = numberToWords(payableTotal);
   const taxInWords = numberToWords(totalTax);
+  const documentNumberLabel = invoiceData.documentNumberLabel || 'Invoice Number';
+  const documentDateLabel = invoiceData.documentDateLabel || 'Invoice Date';
+  const buyerSectionLabel = invoiceData.partySectionLabel || 'Billed To';
+  const systemGeneratedFooterText =
+    invoiceData.systemGeneratedFooterText ||
+    'This is an electronically generated document, no signature is required.';
 
   const tableColumns = useMemo(
     () =>
-      getVisibleColumns(resolvedConfig)
-        .filter((column) => {
-          if (column.key === 'igst' && gstType !== 'IGST') return false;
-          if ((column.key === 'cgst' || column.key === 'sgst') && gstType !== 'CGST_SGST') return false;
-          return column.visible !== false;
-        }),
-    [resolvedConfig, gstType],
+      getVisibleColumns(resolvedConfig).filter((column) => {
+        if (column.key === 'igst' && gstType !== 'IGST') return false;
+        if ((column.key === 'cgst' || column.key === 'sgst') && gstType !== 'CGST_SGST') return false;
+        return column.visible !== false;
+      }),
+    [resolvedConfig, gstType]
   );
 
   const showHSN = tableColumns.some((col) => col.key === 'hsn');
 
-  const headerClass = mapFieldStyleToClasses(getFieldConfig(resolvedConfig, 'header', 'title')?.style || getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style || getSectionConfigStyle('header'));
-  const headerInline = mapFieldStyleToInlineStyle(getFieldConfig(resolvedConfig, 'header', 'title')?.style || getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style || getSectionConfigStyle('header'));
+  function getSectionConfigStyle(sectionId: string) {
+    return resolvedConfig.sections.find((section) => section.id === sectionId)?.style;
+  }
+
+  const headerClass = mapFieldStyleToClasses(
+    getFieldConfig(resolvedConfig, 'header', 'title')?.style ||
+      getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style ||
+      getSectionConfigStyle('header')
+  );
+  const headerInline = mapFieldStyleToInlineStyle(
+    getFieldConfig(resolvedConfig, 'header', 'title')?.style ||
+      getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style ||
+      getSectionConfigStyle('header')
+  );
   const companyClass = mapFieldStyleToClasses(getSectionConfigStyle('companyDetails'));
   const companyInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('companyDetails'));
   const consigneeClass = mapFieldStyleToClasses(getSectionConfigStyle('consignee'));
@@ -107,10 +124,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const buyerInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('buyer'));
   const orderMetaClass = mapFieldStyleToClasses(getSectionConfigStyle('orderMeta'));
   const orderMetaInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('orderMeta'));
-
-  function getSectionConfigStyle(sectionId: string) {
-    return resolvedConfig.sections.find((section) => section.id === sectionId)?.style;
-  }
 
   const formatCurrency = (value: unknown): string => {
     const numeric = toNumber(value) ?? 0;
@@ -128,7 +141,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const renderCell = (
     item: any,
     columnKey: string,
-    formatter: ColumnConfig['formatter'],
+    formatter: ColumnConfig['formatter']
   ): React.ReactNode => {
     const rawValue = getColumnValue(item, columnKey, invoiceData);
 
@@ -140,12 +153,8 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
       return (
         <div className="space-y-1">
           <span className="block font-semibold text-gray-800">{String(title || '')}</span>
-          {description ? (
-            <span className="block text-[11px] text-gray-600">{description}</span>
-          ) : null}
-          {hsnWithinCell ? (
-            <span className="block text-[11px] text-gray-500">HSN/SAC: {hsnWithinCell}</span>
-          ) : null}
+          {description ? <span className="block text-[11px] text-gray-600">{description}</span> : null}
+          {hsnWithinCell ? <span className="block text-[11px] text-gray-500">HSN/SAC: {hsnWithinCell}</span> : null}
         </div>
       );
     }
@@ -192,13 +201,11 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
 
   const subjectLabel = getFieldLabel(resolvedConfig, 'header', 'subjectLabel', 'Subject');
   const subjectValue = String(invoiceData.projectSubject ?? '').trim();
-  const showSubject = headerVisible && isFieldVisible(resolvedConfig, 'header', 'subjectLabel', true) && subjectValue.length > 0;
+  const showSubject =
+    headerVisible && isFieldVisible(resolvedConfig, 'header', 'subjectLabel', true) && subjectValue.length > 0;
 
   const renderMetaRow = (label: string, value: React.ReactNode, key: string, multiline?: boolean) => {
-    const isEmpty =
-      value == null ||
-      (typeof value === 'string' && value.trim().length === 0);
-
+    const isEmpty = value == null || (typeof value === 'string' && value.trim().length === 0);
     if (isEmpty) return null;
 
     return (
@@ -213,14 +220,15 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
     );
   };
 
-  const invoiceNoLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceNumberLabel', 'Invoice No.');
-  const dateLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceDateLabel', 'Dated');
-  const buyersOrderLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'buyersOrderLabel', "Buyer's Order No.");
   const shippingAddressText = normalizeMultiline(invoiceData.shippingAddressLabel);
   const shippingAddressContact = String(invoiceData.shippingAddressContactLabel ?? '').trim();
   const shippingAddressCombined = [shippingAddressText, shippingAddressContact ? `Contact: ${shippingAddressContact}` : '']
     .filter(Boolean)
     .join('\n');
+
+  const invoiceNoLabel = documentNumberLabel;
+  const dateLabel = documentDateLabel;
+  const buyersOrderLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'buyersOrderLabel', "Buyer's Order No.");
   const shippingAddressLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'shippingAddressLabel', 'Shipping Address');
   const deliveryNoteLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'deliveryNoteLabel', 'Delivery Note');
   const dispatchDocLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'dispatchDocLabel', 'Dispatch Doc No.');
@@ -247,15 +255,17 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
           {showTitle && <h1 className="text-2xl font-bold text-gray-900">{displayTitle}</h1>}
           {showSubject && (
             <p className="mt-2 text-base">
-              <span className="font-bold">{subjectLabel}</span>{' '}
-              <span>{subjectValue}</span>
+              <span className="font-bold">{subjectLabel}</span> <span>{subjectValue}</span>
             </p>
           )}
         </header>
       )}
 
       {companySectionVisible && (
-        <section className={`mb-4 border-y border-gray-400 py-2 text-center text-xxs text-black avoid-break ${companyClass}`} style={companyInline}>
+        <section
+          className={`mb-4 border-y border-gray-400 py-2 text-center text-xxs text-black avoid-break ${companyClass}`}
+          style={companyInline}
+        >
           {['companyHeading', 'addressLabel', 'gstinLabel', 'contactLabel', 'emailLabel']
             .filter((key) => isFieldVisible(resolvedConfig, 'companyDetails', key, true))
             .map((key) => {
@@ -281,7 +291,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         {buyerVisible && (
           <div className={`p-2 ${buyerClass}`} style={buyerInline}>
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
-              {getSectionLabel(resolvedConfig, 'buyer', 'Buyer (Bill To)')}
+              {buyerSectionLabel}
             </h3>
             {['heading', 'gstinLabel', 'stateLabel', 'contactPersonLabel', 'contactLabel']
               .map((key) => getFieldConfig(resolvedConfig, 'buyer', key))
@@ -359,9 +369,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
             <table className="w-full border-collapse text-xs">
               <thead className="bg-black-200 uppercase tracking-wide text-bold text-solid black">
                 <tr className="avoid-break">
-                  {showHSN && (
-                    <th className="bg-violet-400 p-2 text-center">HSN</th>
-                  )}
+                  {showHSN && <th className="bg-violet-400 p-2 text-center">HSN</th>}
                   <th className="bg-violet-400 p-2 text-center">Taxable Value</th>
 
                   {gstType === 'IGST' ? (
@@ -387,9 +395,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                     key={hsn}
                     className={`avoid-break border-t border-black-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
                   >
-                    {showHSN && (
-                      <td className="border border-black-200 p-2 text-center">{hsn}</td>
-                    )}
+                    {showHSN && <td className="border border-black-200 p-2 text-center">{hsn}</td>}
 
                     <td className="border border-black-200 p-2 text-center">{formatCurrency(summary.taxableValue)}</td>
 
@@ -454,7 +460,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                     value = formatCurrency(payableTotal);
                     break;
                   default:
-                    value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
+                    value = invoiceData[field.key] ?? field.defaultValue ?? '';
                 }
 
                 return (
@@ -478,7 +484,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
             let value: any = '';
             if (field.key === 'amountChargeableLabel') value = amountInWords;
             else if (field.key === 'taxAmountLabel') value = taxInWords;
-            else value = (invoiceData as any)[field.key] ?? field.defaultValue ?? '';
+            else value = invoiceData[field.key] ?? field.defaultValue ?? '';
             return (
               <p key={field.key} className="font-bold text-gray-800">
                 {label}
@@ -510,6 +516,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               .map((key) => getFieldConfig(resolvedConfig, 'bankDetails', key))
               .filter(Boolean)
               .map((field) => renderField('bankDetails', field))}
+          </div>
+          <div className="mt-4 text-center text-[11px] text-gray-600">
+            {systemGeneratedFooterText}
           </div>
         </footer>
       )}

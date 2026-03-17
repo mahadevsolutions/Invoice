@@ -403,6 +403,40 @@ const tightenAuthorizedBlock = (root: HTMLElement, invoiceMeta: any) => {
   return snaps;
 };
 
+const getDocumentMode = (invoiceMeta: any): 'invoice' | 'purchaseOrder' | 'quotation' => {
+  const mode = String(invoiceMeta?.documentMode || '').trim();
+  if (mode === 'purchaseOrder' || mode === 'quotation' || mode === 'invoice') {
+    return mode;
+  }
+  return 'invoice';
+};
+
+const getFooterLabels = (invoiceMeta: any) => {
+  const mode = getDocumentMode(invoiceMeta);
+
+  if (mode === 'purchaseOrder') {
+    return {
+      numberLabel: 'Purchase Order No',
+      dateLabel: 'Date',
+      partyLabel: 'Vendor',
+    };
+  }
+
+  if (mode === 'quotation') {
+    return {
+      numberLabel: 'Quotation No',
+      dateLabel: 'Date',
+      partyLabel: 'Quotation To',
+    };
+  }
+
+  return {
+    numberLabel: 'Invoice No',
+    dateLabel: 'Invoice Date',
+    partyLabel: 'Billed To',
+  };
+};
+
 const drawBottomFooter = (
   pdf: any,
   pageNum: number,
@@ -423,6 +457,8 @@ const drawBottomFooter = (
   const metaValueY = metaTopY + 4;
   const pageBottomY = pdfHeight - 4;
 
+  const { numberLabel, dateLabel, partyLabel } = getFooterLabels(invoiceMeta);
+
   const invoiceNo = String(invoiceMeta?.quotationNumber || invoiceMeta?.invoiceNumber || '---');
   const invoiceDate = String(invoiceMeta?.date || '---');
   const billedTo = String(invoiceMeta?.clientName || invoiceMeta?.consigneeName || '---');
@@ -433,17 +469,17 @@ const drawBottomFooter = (
 
   if (!isCompact) {
     pdf.setFont(undefined, 'bold');
-    pdf.text('Invoice No', padX, metaTopY);
+    pdf.text(numberLabel, padX, metaTopY);
     pdf.setFont(undefined, 'normal');
     pdf.text(invoiceNo, padX, metaValueY);
 
     pdf.setFont(undefined, 'bold');
-    pdf.text('Invoice Date', padX + 44, metaTopY);
+    pdf.text(dateLabel, padX + 44, metaTopY);
     pdf.setFont(undefined, 'normal');
     pdf.text(invoiceDate, padX + 44, metaValueY);
 
     pdf.setFont(undefined, 'bold');
-    pdf.text('Billed To', padX + 92, metaTopY);
+    pdf.text(partyLabel, padX + 92, metaTopY);
     pdf.setFont(undefined, 'normal');
     pdf.text(billedTo, padX + 92, metaValueY);
 
@@ -456,23 +492,31 @@ const drawBottomFooter = (
 
     pdf.setFontSize(8.5);
 
+    const numberLabelWithColon = `${numberLabel}: `;
     pdf.setFont(undefined, 'bold');
-    pdf.text('Invoice No: ', leftX, baseY);
-    const invLabelW = pdf.getTextWidth('Invoice No: ');
+    pdf.text(numberLabelWithColon, leftX, baseY);
+    const invLabelW = pdf.getTextWidth(numberLabelWithColon);
     pdf.setFont(undefined, 'normal');
     pdf.text(invoiceNo, leftX + invLabelW, baseY);
 
     const billedY = baseY + 4;
+    const partyLabelWithColon = `${partyLabel}: `;
     pdf.setFont(undefined, 'bold');
-    pdf.text('Billed To: ', leftX, billedY);
-    const billedLabelW = pdf.getTextWidth('Billed To: ');
+    pdf.text(partyLabelWithColon, leftX, billedY);
+    const billedLabelW = pdf.getTextWidth(partyLabelWithColon);
     pdf.setFont(undefined, 'normal');
     pdf.text(billedTo, leftX + billedLabelW, billedY);
 
     const rightX = pdfWidth - 12;
+
+    const dateLabelWithColon = `${dateLabel}: `;
+    pdf.setFont(undefined, 'bold');
+    const dateValueW = pdf.getTextWidth(invoiceDate);
+    const dateLabelW = pdf.getTextWidth(dateLabelWithColon);
+    const dateTextX = rightX - dateValueW;
+    pdf.text(dateLabelWithColon, dateTextX - dateLabelW, baseY);
     pdf.setFont(undefined, 'normal');
-    const dateW = pdf.getTextWidth(invoiceDate);
-    pdf.text(invoiceDate, rightX - dateW, baseY);
+    pdf.text(invoiceDate, dateTextX, baseY);
 
     const pgW = pdf.getTextWidth(pageText);
     pdf.text(pageText, rightX - pgW, billedY);

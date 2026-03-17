@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Define only the templates that have implementations in the repo
 export const VISUAL_TEMPLATES = {
   DIGITAL_MARKETING: 'Digital Marketing Style',
   TAX_INVOICE: 'Tax Invoice Style',
@@ -8,7 +7,6 @@ export const VISUAL_TEMPLATES = {
   PROFESSIONAL_QUOTATION: 'Professional Quotation Style',
 } as const;
 
-// Import your separated template components
 import { DigitalMarketingTemplate } from './DigitalMarketingTemplate';
 import PurchaseOrderTemplate from './PurchaseOrderTemplate';
 import ProfessionalQuotationTemplate from './ProfessionalQuotationTemplate';
@@ -20,24 +18,16 @@ interface InvoicePreviewProps {
   data: any;
 }
 
-/**
- * InvoicePreview
- *
- * - Uses only templates that exist in your project.
- * - Defaults to TAX_INVOICE when `data.template` is missing or unknown.
- * - Keeps the printable wrapper `#invoice-wrapper` and a `.page-break-group`
- *   around the main template output so pdfGenerator can do DOM page-splitting.
- */
 const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ data }, ref) => {
   const items = data?.items ?? [];
   const providedTemplate = (data?.template as string) || '';
-  // Resolve template by key (e.g. 'PURCHASE_ORDER') or by value (e.g. 'Purchase Order Style').
   const templateKeys = Object.keys(VISUAL_TEMPLATES) as VisualTemplateKey[];
   let templateKey: VisualTemplateKey = 'TAX_INVOICE';
+
   if (templateKeys.includes(providedTemplate as VisualTemplateKey)) {
     templateKey = providedTemplate as VisualTemplateKey;
   } else {
-    const match = templateKeys.find(k => VISUAL_TEMPLATES[k] === providedTemplate);
+    const match = templateKeys.find((k) => VISUAL_TEMPLATES[k] === providedTemplate);
     if (match) templateKey = match;
   }
 
@@ -46,35 +36,68 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
     0
   );
 
-  // --- TAX CALC (keeps previous logic) ---
   let totalCgst = 0;
   let totalSgst = 0;
   let totalIgst = 0;
   const rate = (data?.globalTaxRate || 0) / 100;
+
   if (data?.gstType === 'IGST') {
     totalIgst = subtotal * rate;
   } else {
     totalCgst = subtotal * (rate / 2);
     totalSgst = subtotal * (rate / 2);
   }
+
   const shipping = data?.shippingCost || 0;
   const total = subtotal + totalCgst + totalSgst + totalIgst + shipping;
   const tax = totalCgst + totalSgst + totalIgst;
-  // --- END TAX CALC ---
-
   const templateConfig = data?.templateConfig;
+
   const footerLines = (data?.footerDetails || '')
     .toString()
     .split(/\r?\n/)
     .map((line: string) => line.trim())
     .filter((line: string) => line.length > 0);
 
+  const normalizedData = {
+    ...data,
+    subtotal,
+    totalCgst,
+    totalSgst,
+    totalIgst,
+    tax,
+    total,
+    shipping,
+    documentNumberLabel:
+      data?.documentNumberLabel ||
+      (templateKey === 'PURCHASE_ORDER'
+        ? 'Purchase Order Number'
+        : templateKey === 'PROFESSIONAL_QUOTATION'
+        ? 'Quotation Number'
+        : 'Invoice Number'),
+    documentDateLabel:
+      data?.documentDateLabel ||
+      (templateKey === 'PURCHASE_ORDER' || templateKey === 'PROFESSIONAL_QUOTATION'
+        ? 'Date'
+        : 'Invoice Date'),
+    partySectionLabel:
+      data?.partySectionLabel ||
+      (templateKey === 'PURCHASE_ORDER'
+        ? 'Vendor'
+        : templateKey === 'PROFESSIONAL_QUOTATION'
+        ? 'Quotation To'
+        : 'Billed To'),
+    systemGeneratedFooterText:
+      data?.systemGeneratedFooterText ||
+      'This is an electronically generated document, no signature is required.',
+  };
+
   const renderTemplate = () => {
     switch (templateKey) {
       case 'DIGITAL_MARKETING':
         return (
           <DigitalMarketingTemplate
-            data={data}
+            data={normalizedData}
             subtotal={subtotal}
             totalCgst={totalCgst}
             totalSgst={totalSgst}
@@ -83,24 +106,20 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
           />
         );
       case 'PURCHASE_ORDER':
-        return <PurchaseOrderTemplate data={data} templateConfig={templateConfig} />;
+        return <PurchaseOrderTemplate data={normalizedData} templateConfig={templateConfig} />;
       case 'TAX_INVOICE':
-        return <TaxInvoiceTemplate data={data} templateConfig={templateConfig} />;
+        return <TaxInvoiceTemplate data={normalizedData} templateConfig={templateConfig} />;
       case 'PROFESSIONAL_QUOTATION':
-        return <ProfessionalQuotationTemplate data={data} templateConfig={templateConfig} />;
+        return <ProfessionalQuotationTemplate data={normalizedData} templateConfig={templateConfig} />;
       default:
-        // Fallback (shouldn't be hit because of templateKey logic), render tax invoice as safe fallback
-        return <TaxInvoiceTemplate data={data} templateConfig={templateConfig} />;
+        return <TaxInvoiceTemplate data={normalizedData} templateConfig={templateConfig} />;
     }
   };
 
   return (
-    /* Top-level printable wrapper expected by pdfGenerator.ts */
     <div id="invoice-wrapper" ref={ref} className="invoice-root p-8 bg-white shadow-lg rounded-xl">
-      {/* Main printable area: keep as one page-break-group or add more inside templates as needed */}
       <div className="page-break-group">{renderTemplate()}</div>
 
-      {/* UI-only preview footer — hidden during PDF capture */}
       {footerLines.length > 0 && (
         <div className="no-print-footer mt-8 text-center text-xs text-gray-500">
           {footerLines.map((line: string, index: number) => (
