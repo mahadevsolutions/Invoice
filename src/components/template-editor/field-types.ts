@@ -560,10 +560,10 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
     createSection('orderMeta', 'Order Meta', true, [
       { key: 'invoiceNumberLabel', label: 'Invoice No.', visible: true },
       { key: 'invoiceDateLabel', label: 'Dated', visible: true },
+      { key: 'buyersOrderLabel', label: "Buyer's Order No.", visible: true },
       { key: 'shippingAddressLabel', label: 'Shipping Address', visible: true, type: 'textarea' },
       { key: 'shippingAddressContactLabel', label: 'Shipping Contact Number', visible: true, type: 'text' },
       { key: 'deliveryNoteLabel', label: 'Delivery Note', visible: true },
-      { key: 'buyersOrderLabel', label: "Buyer's Order No.", visible: true },
       { key: 'dispatchDocLabel', label: 'Dispatch Doc No.', visible: true },
       { key: 'dispatchedThroughLabel', label: 'Dispatched through', visible: true },
       { key: 'destinationLabel', label: 'Destination', visible: true },
