@@ -523,15 +523,15 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
       { key: 'contactLabel', label: 'Contact', visible: true },
       { key: 'emailLabel', label: 'E-Mail', visible: true },
     ], 1),
-    createSection('consignee', 'Consignee (Bill By)', true, [
-      { key: 'heading', label: 'Consignee (Bill By)', visible: true },
+    createSection('consignee', 'Consignee (Ship To)', true, [
+      { key: 'heading', label: 'Consignee (Ship To)', visible: true },
       { key: 'gstinLabel', label: 'GSTIN/UIN', visible: true },
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },
       { key: 'contactLabel', label: 'Contact', visible: true },
     ], 2),
-    createSection('buyer', 'Buyer (Bill to)', true, [
-      { key: 'heading', label: 'Buyer (Bill to)', visible: true },
+    createSection('buyer', 'Buyer (Bill To)', true, [
+      { key: 'heading', label: 'Buyer (Bill To)', visible: true },
       { key: 'gstinLabel', label: 'GSTIN/UIN', visible: true },
       { key: 'stateLabel', label: 'State Name', visible: true },
       { key: 'contactPersonLabel', label: 'Contact Person', visible: true },

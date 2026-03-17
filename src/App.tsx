@@ -60,7 +60,7 @@ export const VISUAL_TEMPLATES = {
 };
 
 const defaultLogoUrl =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
 
 const BANK_DEFAULTS = {
   companyBankName: 'AXIS BANK',
@@ -750,6 +750,92 @@ export default function App() {
                   )}
                 </div>
 
+                
+
+                {activeTemplateName === 'Invoice' && (
+                  <div className="space-y-4 mb-6">
+                    <h3 className="font-semibold text-lg border-b pb-2">Consignee (Ship To) Details</h3>
+
+                    <input
+                      type="text"
+                      placeholder={getPlaceholderForKey('consigneeName', 'Consignee Name')}
+                      value={invoiceData.consigneeName || ''}
+                      onChange={(e) => updateInvoiceField('consigneeName', e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                    />
+
+                    <textarea
+                      placeholder={getPlaceholderForKey('consigneeAddress', 'Consignee Address')}
+                      value={invoiceData.consigneeAddress || ''}
+                      onChange={(e) => updateInvoiceField('consigneeAddress', e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                      rows={2}
+                    />
+
+                    <input
+                      type="text"
+                      placeholder={getPlaceholderForKey('consigneeGstin', 'Consignee GSTIN/UIN')}
+                      value={invoiceData.consigneeGstin || ''}
+                      onChange={(e) => updateInvoiceField('consigneeGstin', e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder={getPlaceholderForKey('consigneeState', 'Consignee State (e.g., Telangana, Code: 36)')}
+                      value={invoiceData.consigneeState || ''}
+                      onChange={(e) => updateInvoiceField('consigneeState', e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                    />
+
+                    <div className="flex space-x-2">
+                      <input
+                        type="text"
+                        placeholder={getPlaceholderForKey('consigneeContactPerson', 'Contact Person')}
+                        value={invoiceData.consigneeContactPerson || ''}
+                        onChange={(e) => updateInvoiceField('consigneeContactPerson', e.target.value)}
+                        className="w-1/2 p-2 border rounded-md"
+                      />
+                      <input
+                        type="text"
+                        placeholder={getPlaceholderForKey('consigneeContact', 'Contact Phone')}
+                        value={invoiceData.consigneeContact || ''}
+                        onChange={(e) => updateInvoiceField('consigneeContact', e.target.value)}
+                        className="w-1/2 p-2 border rounded-md"
+                      />
+                    </div>
+
+                    {isFieldAllowed('shippingAddressSource') && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          {fieldMap.shippingAddressSource?.label || 'Shipping Address'}
+                        </label>
+                        <select
+                          value={invoiceData.shippingAddressSource || 'Same as billing'}
+                          onChange={(e) => updateInvoiceField('shippingAddressSource', e.target.value)}
+                          className="w-full p-3 border rounded-md bg-white"
+                        >
+                          {getFieldOptions('shippingAddressSource', ['Same as billing', 'Custom']).map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {isFieldAllowed('shippingAddressLabel') && (
+                      <textarea
+                        placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
+                        value={invoiceData.shippingAddressLabel || ''}
+                        onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                        rows={2}
+                      />
+                    )}
+                  </div>
+                )}
+
                 <div className="space-y-4 mb-6">
                   <h3 className="font-semibold text-lg border-b pb-2">
                     {activeTemplateName === 'Purchase Order'
@@ -757,7 +843,7 @@ export default function App() {
                       : activeTemplateName === 'Quotation'
                       ? 'Billed To'
                       : activeTemplateName === 'Invoice'
-                      ? 'Buyer (Bill-to) Details'
+                      ? 'Buyer (Bill To) Details'
                       : 'Client Details'}
                   </h3>
 
@@ -874,90 +960,6 @@ export default function App() {
                     </>
                   )}
                 </div>
-
-                {activeTemplateName === 'Invoice' && (
-                  <div className="space-y-4 mb-6">
-                    <h3 className="font-semibold text-lg border-b pb-2">Consignee (Ship-to) Details</h3>
-
-                    <input
-                      type="text"
-                      placeholder={getPlaceholderForKey('consigneeName', 'Consignee Name')}
-                      value={invoiceData.consigneeName || ''}
-                      onChange={(e) => updateInvoiceField('consigneeName', e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                    />
-
-                    <textarea
-                      placeholder={getPlaceholderForKey('consigneeAddress', 'Consignee Address')}
-                      value={invoiceData.consigneeAddress || ''}
-                      onChange={(e) => updateInvoiceField('consigneeAddress', e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      rows={2}
-                    />
-
-                    <input
-                      type="text"
-                      placeholder={getPlaceholderForKey('consigneeGstin', 'Consignee GSTIN/UIN')}
-                      value={invoiceData.consigneeGstin || ''}
-                      onChange={(e) => updateInvoiceField('consigneeGstin', e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                    />
-
-                    <input
-                      type="text"
-                      placeholder={getPlaceholderForKey('consigneeState', 'Consignee State (e.g., Telangana, Code: 36)')}
-                      value={invoiceData.consigneeState || ''}
-                      onChange={(e) => updateInvoiceField('consigneeState', e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                    />
-
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        placeholder={getPlaceholderForKey('consigneeContactPerson', 'Contact Person')}
-                        value={invoiceData.consigneeContactPerson || ''}
-                        onChange={(e) => updateInvoiceField('consigneeContactPerson', e.target.value)}
-                        className="w-1/2 p-2 border rounded-md"
-                      />
-                      <input
-                        type="text"
-                        placeholder={getPlaceholderForKey('consigneeContact', 'Contact Phone')}
-                        value={invoiceData.consigneeContact || ''}
-                        onChange={(e) => updateInvoiceField('consigneeContact', e.target.value)}
-                        className="w-1/2 p-2 border rounded-md"
-                      />
-                    </div>
-
-                    {isFieldAllowed('shippingAddressSource') && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {fieldMap.shippingAddressSource?.label || 'Shipping Address'}
-                        </label>
-                        <select
-                          value={invoiceData.shippingAddressSource || 'Same as billing'}
-                          onChange={(e) => updateInvoiceField('shippingAddressSource', e.target.value)}
-                          className="w-full p-3 border rounded-md bg-white"
-                        >
-                          {getFieldOptions('shippingAddressSource', ['Same as billing', 'Custom']).map((option) => (
-                            <option key={option} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {isFieldAllowed('shippingAddressLabel') && (
-                      <textarea
-                        placeholder={getPlaceholderForKey('shippingAddressLabel', 'Shipping Address')}
-                        value={invoiceData.shippingAddressLabel || ''}
-                        onChange={(e) => updateInvoiceField('shippingAddressLabel', e.target.value)}
-                        className="w-full p-2 border rounded-md"
-                        rows={2}
-                      />
-                    )}
-                  </div>
-                )}
 
                 {activeTemplateName === 'Purchase Order' && (
                   <div className="space-y-4 mb-6">
