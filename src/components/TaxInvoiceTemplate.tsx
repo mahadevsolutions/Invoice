@@ -7,12 +7,12 @@ import {
   TemplateConfig,
   createTaxInvoiceDefaultConfig,
   getColumnValue,
+  getFieldConfig,
   getFieldLabel,
   getSectionLabel,
   getVisibleColumns,
   isSectionVisible,
-  getOrderedFields,
-  getSectionConfig,
+  isFieldVisible,
   resolveTemplateConfig,
 } from 'src/components/template-editor/field-types';
 import { mapFieldStyleToClasses, mapFieldStyleToInlineStyle } from 'src/components/template-editor/style-utils';
@@ -61,6 +61,13 @@ const toNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const normalizeMultiline = (value: unknown): string => {
+  return String(value ?? '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+};
+
 export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateConfig, currencySymbol }) => {
   const invoiceData = data || {};
   const resolvedConfig = useMemo(
@@ -90,16 +97,20 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
 
   const showHSN = tableColumns.some((col) => col.key === 'hsn');
 
-  const headerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'header')?.style);
-  const headerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'header')?.style);
-  const companyClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'companyDetails')?.style);
-  const companyInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'companyDetails')?.style);
-  const consigneeClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'consignee')?.style);
-  const consigneeInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'consignee')?.style);
-  const buyerClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'buyer')?.style);
-  const buyerInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'buyer')?.style);
-  const orderMetaClass = mapFieldStyleToClasses(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
-  const orderMetaInline = mapFieldStyleToInlineStyle(getSectionConfig(resolvedConfig, 'orderMeta')?.style);
+  const headerClass = mapFieldStyleToClasses(getFieldConfig(resolvedConfig, 'header', 'title')?.style || getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style || getSectionConfigStyle('header'));
+  const headerInline = mapFieldStyleToInlineStyle(getFieldConfig(resolvedConfig, 'header', 'title')?.style || getFieldConfig(resolvedConfig, 'header', 'subjectLabel')?.style || getSectionConfigStyle('header'));
+  const companyClass = mapFieldStyleToClasses(getSectionConfigStyle('companyDetails'));
+  const companyInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('companyDetails'));
+  const consigneeClass = mapFieldStyleToClasses(getSectionConfigStyle('consignee'));
+  const consigneeInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('consignee'));
+  const buyerClass = mapFieldStyleToClasses(getSectionConfigStyle('buyer'));
+  const buyerInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('buyer'));
+  const orderMetaClass = mapFieldStyleToClasses(getSectionConfigStyle('orderMeta'));
+  const orderMetaInline = mapFieldStyleToInlineStyle(getSectionConfigStyle('orderMeta'));
+
+  function getSectionConfigStyle(sectionId: string) {
+    return resolvedConfig.sections.find((section) => section.id === sectionId)?.style;
+  }
 
   const formatCurrency = (value: unknown): string => {
     const numeric = toNumber(value) ?? 0;
@@ -175,6 +186,48 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const designation = String(invoiceData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation ?? '').trim();
   const hasAuthText = personName.length > 0 || designation.length > 0;
 
+  const titleLabel = getFieldLabel(resolvedConfig, 'header', 'title', 'Tax Invoice');
+  const displayTitle = String(invoiceData.invoiceTitle ?? '').trim() || titleLabel;
+  const showTitle = headerVisible && displayTitle.length > 0;
+
+  const subjectLabel = getFieldLabel(resolvedConfig, 'header', 'subjectLabel', 'Subject');
+  const subjectValue = String(invoiceData.projectSubject ?? '').trim();
+  const showSubject = headerVisible && isFieldVisible(resolvedConfig, 'header', 'subjectLabel', true) && subjectValue.length > 0;
+
+  const renderMetaRow = (label: string, value: React.ReactNode, key: string, multiline?: boolean) => {
+    const isEmpty =
+      value == null ||
+      (typeof value === 'string' && value.trim().length === 0);
+
+    if (isEmpty) return null;
+
+    return (
+      <div key={key} className="border-b border-gray-200 px-3 py-2 last:border-b-0">
+        <div className="font-semibold text-gray-800">{label}</div>
+        {multiline ? (
+          <div className="mt-1 whitespace-pre-line text-gray-700">{value}</div>
+        ) : (
+          <div className="mt-1 text-gray-700">{value}</div>
+        )}
+      </div>
+    );
+  };
+
+  const invoiceNoLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceNumberLabel', 'Invoice No.');
+  const dateLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'invoiceDateLabel', 'Dated');
+  const buyersOrderLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'buyersOrderLabel', "Buyer's Order No.");
+  const shippingAddressText = normalizeMultiline(invoiceData.shippingAddressLabel);
+  const shippingAddressContact = String(invoiceData.shippingAddressContactLabel ?? '').trim();
+  const shippingAddressCombined = [shippingAddressText, shippingAddressContact ? `Contact: ${shippingAddressContact}` : '']
+    .filter(Boolean)
+    .join('\n');
+  const shippingAddressLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'shippingAddressLabel', 'Shipping Address');
+  const deliveryNoteLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'deliveryNoteLabel', 'Delivery Note');
+  const dispatchDocLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'dispatchDocLabel', 'Dispatch Doc No.');
+  const dispatchedThroughLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'dispatchedThroughLabel', 'Dispatched through');
+  const destinationLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'destinationLabel', 'Destination');
+  const termsLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'termsLabel', 'Terms of Delivery');
+
   return (
     <div className="bg-white p-6 font-sans text-xs text-black">
       <style>{`
@@ -189,15 +242,26 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         .auth-by-tight .auth-by-des { margin-top: 4px !important; }
       `}</style>
 
-      {headerVisible && (
+      {(showTitle || showSubject) && (
         <header className={`mb-4 text-center avoid-break ${headerClass}`} style={headerInline}>
-          {getOrderedFields(resolvedConfig, 'header').map((field) => renderField('header', field))}
+          {showTitle && <h1 className="text-2xl font-bold text-gray-900">{displayTitle}</h1>}
+          {showSubject && (
+            <p className="mt-2 text-base">
+              <span className="font-bold">{subjectLabel}</span>{' '}
+              <span>{subjectValue}</span>
+            </p>
+          )}
         </header>
       )}
 
       {companySectionVisible && (
         <section className={`mb-4 border-y border-gray-400 py-2 text-center text-xxs text-black avoid-break ${companyClass}`} style={companyInline}>
-          {getOrderedFields(resolvedConfig, 'companyDetails').map((field) => renderField('companyDetails', field))}
+          {['companyHeading', 'addressLabel', 'gstinLabel', 'contactLabel', 'emailLabel']
+            .filter((key) => isFieldVisible(resolvedConfig, 'companyDetails', key, true))
+            .map((key) => {
+              const field = getFieldConfig(resolvedConfig, 'companyDetails', key);
+              return field ? renderField('companyDetails', field) : null;
+            })}
         </section>
       )}
 
@@ -205,24 +269,38 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         {consigneeVisible && (
           <div className={`p-2 ${consigneeClass}`} style={consigneeInline}>
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
-              {getSectionLabel(resolvedConfig, 'consignee', 'Consignee (Ship to)')}
+              {getSectionLabel(resolvedConfig, 'consignee', 'Billed By')}
             </h3>
-            {getOrderedFields(resolvedConfig, 'consignee').map((field) => renderField('consignee', field))}
+            {['heading', 'gstinLabel', 'stateLabel', 'contactPersonLabel', 'contactLabel']
+              .map((key) => getFieldConfig(resolvedConfig, 'consignee', key))
+              .filter(Boolean)
+              .map((field) => renderField('consignee', field))}
           </div>
         )}
 
         {buyerVisible && (
           <div className={`p-2 ${buyerClass}`} style={buyerInline}>
             <h3 className="mb-1 border-b border-gray-300 pb-1 font-bold text-gray-900">
-              {getSectionLabel(resolvedConfig, 'buyer', 'Buyer (Bill to)')}
+              {getSectionLabel(resolvedConfig, 'buyer', 'Buyer (Bill To)')}
             </h3>
-            {getOrderedFields(resolvedConfig, 'buyer').map((field) => renderField('buyer', field))}
+            {['heading', 'gstinLabel', 'stateLabel', 'contactPersonLabel', 'contactLabel']
+              .map((key) => getFieldConfig(resolvedConfig, 'buyer', key))
+              .filter(Boolean)
+              .map((field) => renderField('buyer', field))}
           </div>
         )}
 
         {orderMetaVisible && (
-          <div className={`p-2 text-xs text-gray-700 ${orderMetaClass}`} style={orderMetaInline}>
-            {getOrderedFields(resolvedConfig, 'orderMeta').map((field) => renderField('orderMeta', field))}
+          <div className={`overflow-hidden rounded border border-gray-200 ${orderMetaClass}`} style={orderMetaInline}>
+            {renderMetaRow(invoiceNoLabel, String(invoiceData.quotationNumber ?? '').trim(), 'invoiceNumber')}
+            {renderMetaRow(dateLabel, String(invoiceData.date ?? '').trim(), 'date')}
+            {renderMetaRow(buyersOrderLabel, String(invoiceData.buyersOrderNo ?? '').trim(), 'buyersOrder')}
+            {renderMetaRow(shippingAddressLabel, shippingAddressCombined, 'shippingAddress', true)}
+            {renderMetaRow(deliveryNoteLabel, String(invoiceData.deliveryNote ?? '').trim(), 'deliveryNote')}
+            {renderMetaRow(dispatchDocLabel, String(invoiceData.dispatchDocNo ?? '').trim(), 'dispatchDoc')}
+            {renderMetaRow(dispatchedThroughLabel, String(invoiceData.dispatchedThrough ?? '').trim(), 'dispatchedThrough')}
+            {renderMetaRow(destinationLabel, String(invoiceData.destination ?? '').trim(), 'destination')}
+            {renderMetaRow(termsLabel, normalizeMultiline(invoiceData.termsOfDelivery), 'termsOfDelivery', true)}
           </div>
         )}
       </section>
@@ -261,7 +339,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                       return (
                         <td
                           key={column.key}
-                          className={'text-center align-top p-2'}
+                          className="text-center align-top p-2"
                         >
                           {content}
                         </td>
@@ -347,8 +425,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               Tax Summary
             </div>
             <dl className="divide-y divide-gray-200 text-[0.8rem]">
-              {getOrderedFields(resolvedConfig, 'totals').map((field) => {
-                if (field.visible === false) return null;
+              {['subtotalLabel', 'cgstLabel', 'sgstLabel', 'igstLabel', 'totalTaxLabel', 'roundOffLabel', 'grandTotalLabel'].map((key) => {
+                const field = getFieldConfig(resolvedConfig, 'totals', key);
+                if (!field || field.visible === false) return null;
                 const label = getFieldLabel(resolvedConfig, 'totals', field.key, field.label || '');
                 let value: any = '';
                 switch (field.key) {
@@ -392,8 +471,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
 
       {amountInWordsVisible && (
         <section className="mb-2 border-t border-gray-400 pt-2 avoid-break">
-          {getOrderedFields(resolvedConfig, 'amountInWords').map((field) => {
-            if (field.visible === false) return null;
+          {['amountChargeableLabel', 'taxAmountLabel'].map((key) => {
+            const field = getFieldConfig(resolvedConfig, 'amountInWords', key);
+            if (!field || field.visible === false) return null;
             const label = getFieldLabel(resolvedConfig, 'amountInWords', field.key, field.label || '');
             let value: any = '';
             if (field.key === 'amountChargeableLabel') value = amountInWords;
@@ -426,7 +506,10 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
             <h4 className="mb-1 font-bold text-gray-900">
               {getSectionLabel(resolvedConfig, 'bankDetails', "Company's Bank Details")}
             </h4>
-            {getOrderedFields(resolvedConfig, 'bankDetails').map((field) => renderField('bankDetails', field))}
+            {['bankNameLabel', 'accountNumberLabel', 'branchLabel', 'declarationHeading']
+              .map((key) => getFieldConfig(resolvedConfig, 'bankDetails', key))
+              .filter(Boolean)
+              .map((field) => renderField('bankDetails', field))}
           </div>
         </footer>
       )}

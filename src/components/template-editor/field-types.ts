@@ -533,7 +533,7 @@ export const createTaxInvoiceDefaultConfig = (): TemplateConfig => ({
   name: 'Tax Invoice',
   sections: [
     createSection('header', 'Header', true, [
-      { key: 'title', label: 'Tax Invoice', visible: true },
+      { key: 'title', label: 'Tax Invoice', visible: false },
       { key: 'subjectLabel', label: 'Subject', visible: true },
     ], 0),
     createSection('companyDetails', 'Company Details', true, [
