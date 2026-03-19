@@ -88,8 +88,9 @@ const InvoicePreview = React.forwardRef<HTMLDivElement, InvoicePreviewProps>(({ 
         ? 'Quotation To'
         : 'Billed To'),
     systemGeneratedFooterText:
-      data?.systemGeneratedFooterText ||
-      'This is an electronically generated document, no signature is required.',
+      typeof data?.systemGeneratedFooterText === 'string'
+        ? data.systemGeneratedFooterText
+        : 'This is an electronically generated document, no signature is required.',
   };
 
   const renderTemplate = () => {

@@ -337,6 +337,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
       <AuthorizedBy
         signatureUrl={purchaseData.authorizedSignatureUrl}
         personName={purchaseData.authorizedPersonName}
+        designation={purchaseData.authorizedDesignation}
         align="right"
         label={resolvedConfig.authorizedBy?.label}
         visible={resolvedConfig.authorizedBy?.visible !== false}

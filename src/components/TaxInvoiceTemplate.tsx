@@ -87,8 +87,9 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const documentDateLabel = invoiceData.documentDateLabel || 'Invoice Date';
   const buyerSectionLabel = invoiceData.partySectionLabel || 'Billed To';
   const systemGeneratedFooterText =
-    invoiceData.systemGeneratedFooterText ||
-    'This is an electronically generated document, no signature is required.';
+    typeof invoiceData.systemGeneratedFooterText === 'string'
+      ? invoiceData.systemGeneratedFooterText
+      : 'This is an electronically generated document, no signature is required.';
 
   const tableColumns = useMemo(
     () =>

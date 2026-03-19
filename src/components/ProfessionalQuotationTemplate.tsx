@@ -117,9 +117,6 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
   const documentNumberLabel = invoiceData.documentNumberLabel || 'Quotation Number';
   const documentDateLabel = invoiceData.documentDateLabel || 'Date';
   const partySectionLabel = invoiceData.partySectionLabel || 'Quotation To';
-  const systemGeneratedFooterText =
-    invoiceData.systemGeneratedFooterText ||
-    'This is an electronically generated document, no signature is required.';
 
   const tableColumns = useMemo(
     () =>
@@ -496,9 +493,6 @@ export const ProfessionalQuotationTemplate: React.FC<QuotationProps> = ({
           <p className="mt-1">
             <span className="font-bold">{String(invoiceData.bankIfscLabel ?? 'IFSC CODE :')}</span> {bankIfsc}
           </p>
-        </div>
-        <div className="mt-4 text-center text-[11px] text-gray-600">
-          {systemGeneratedFooterText}
         </div>
       </footer>
 

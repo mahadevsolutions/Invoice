@@ -60,7 +60,7 @@ export const VISUAL_TEMPLATES = {
 };
 
 const defaultLogoUrl =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAABJCAMAAAB8a8NCAAAAmVBMVEVHcEz/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gwD/gQD/gQD/gwD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gQD/gQD/gwD/gQD/gQD/gQD/gQD/gwD/gwD/gQD/gwD/gwD/gQD/gwD/gwC12B/lAAAAJnRSTlMAAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHx/d32f4AAAApElEQVRYw+3WSQqAMAwEUdJg3B0b3f+sDgjvRzIJDk/i4Q4uW+q5iK+S2Kq1pUUtR9iU4LdFk6F/6S91g1rC1fS8hYq4o00v+R5T9+7w2k9h8H91pBvR1D/f0oI+8tH/iP+8v2C/fK92f+7f3vCjR/9u/vXG/9jP2f94f6C/Xn2C/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c79+ffy2/c7-..';
 
 const BANK_DEFAULTS = {
   companyBankName: 'AXIS BANK',
@@ -337,6 +337,10 @@ export default function App() {
     return nameOk || desOk;
   };
 
+  const hasSignatureImage = (data: any) => {
+    return String(data?.authorizedSignatureUrl || '').trim().length > 0;
+  };
+
   const buildFooterLine = (data: any) => {
     const rawUserFooter = String(data?.footerDetails || '').trim();
     const userFooter = rawUserFooter
@@ -462,13 +466,14 @@ export default function App() {
 
   const documentMode = getDocumentMode(activeTemplateName, effectivePreviewData, template);
   const documentLabels = getDocumentLabels(documentMode);
+  const signatureUsed = hasSignatureImage(effectivePreviewData);
 
   effectivePreviewData.footerDetails = buildFooterLine(effectivePreviewData);
   effectivePreviewData.documentMode = documentMode;
   effectivePreviewData.documentNumberLabel = documentLabels.numberLabel;
   effectivePreviewData.documentDateLabel = documentLabels.dateLabel;
   effectivePreviewData.partySectionLabel = documentLabels.billedToLabel;
-  effectivePreviewData.systemGeneratedFooterText = SYSTEM_GENERATED_FOOTER_TEXT;
+  effectivePreviewData.systemGeneratedFooterText = signatureUsed ? '' : SYSTEM_GENERATED_FOOTER_TEXT;
 
   const getPlaceholderForKey = (key: string, fallback?: string) => {
     const f = fieldMap[key];
@@ -597,6 +602,7 @@ export default function App() {
     setIsGenerating(true);
     const footerLine = buildFooterLine(invoiceData);
     const currentDocumentMode = getDocumentMode(activeTemplateName, invoiceData, template);
+    const currentSignatureUsed = hasSignatureImage(invoiceData);
 
     try {
       const invoiceMeta = {
@@ -608,6 +614,7 @@ export default function App() {
         companyName: invoiceData?.companyName,
         footerDetails: footerLine,
         documentMode: currentDocumentMode,
+        systemGeneratedFooterText: currentSignatureUsed ? '' : SYSTEM_GENERATED_FOOTER_TEXT,
       };
 
       await generatePdf(

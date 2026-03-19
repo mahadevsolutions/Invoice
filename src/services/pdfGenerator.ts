@@ -9,6 +9,7 @@ declare global {
 
 const WATERMARK_MAX_WIDTH_RATIO = 0.45;
 const WATERMARK_MAX_HEIGHT_RATIO = 0.45;
+const SYSTEM_GENERATED_FOOTER_TEXT = 'This is an electronically generated document, no signature is required.';
 
 interface WatermarkData {
   dataUrl: string;
@@ -216,7 +217,24 @@ const renderCenteredMultiline = (
 const buildFooterTextForPdf = (invoiceMeta: any, footerText?: string) => {
   const uiFooter = normalizeMultilineText(footerText);
   const metaFooter = normalizeMultilineText(invoiceMeta?.footerDetails);
-  return uiFooter || metaFooter;
+  const systemFooter = normalizeMultilineText(invoiceMeta?.systemGeneratedFooterText);
+  const lines = [uiFooter, metaFooter]
+    .flatMap((value) => value.split('\n'))
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line, index, arr) => arr.indexOf(line) === index);
+
+  if (systemFooter) {
+    const systemLines = systemFooter
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter((line, index, arr) => arr.indexOf(line) === index);
+
+    return [...lines, ...systemLines].join('\n');
+  }
+
+  return lines.join('\n');
 };
 
 const hasAuthorizedDetails = (invoiceMeta: any) => {
@@ -571,6 +589,11 @@ export const generatePdf = async (
     const hasAuth = hasAuthorizedDetails(invoiceMeta);
     const hasSignatureImage = Boolean(signatureImageUrl && String(signatureImageUrl).trim().length > 0);
 
+    const effectiveInvoiceMeta = {
+      ...invoiceMeta,
+      systemGeneratedFooterText: hasSignatureImage ? '' : invoiceMeta?.systemGeneratedFooterText ?? SYSTEM_GENERATED_FOOTER_TEXT,
+    };
+
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -613,7 +636,7 @@ export const generatePdf = async (
 
     await new Promise((r) => setTimeout(r, 250));
 
-    const snaps = tightenAuthorizedBlock(input, invoiceMeta);
+    const snaps = tightenAuthorizedBlock(input, effectiveInvoiceMeta);
 
     let canvas: HTMLCanvasElement;
     try {
@@ -645,7 +668,7 @@ export const generatePdf = async (
     let position = 0;
     let pageNumber = 1;
 
-    const footerCombined = buildFooterTextForPdf(invoiceMeta, footerText);
+    const footerCombined = buildFooterTextForPdf(effectiveInvoiceMeta, footerText);
 
     const maskAndFooter = (pageNum: number, isFirstPage: boolean) => {
       pdf.setFillColor(255, 255, 255);
@@ -660,7 +683,7 @@ export const generatePdf = async (
       } catch {}
 
       const compact = Boolean(hasSignatureImage || hasAuth);
-      drawBottomFooter(pdf, pageNum, totalPages, pdfWidth, pdfHeight, MARGIN_BOTTOM_MM, invoiceMeta, footerCombined, compact);
+      drawBottomFooter(pdf, pageNum, totalPages, pdfWidth, pdfHeight, MARGIN_BOTTOM_MM, effectiveInvoiceMeta, footerCombined, compact);
     };
 
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
@@ -679,7 +702,7 @@ export const generatePdf = async (
       pageNumber++;
     }
 
-    const fileName = sanitizeFilename(String(invoiceMeta?.clientName || 'invoice'), String(invoiceMeta?.date || ''));
+    const fileName = sanitizeFilename(String(effectiveInvoiceMeta?.clientName || 'invoice'), String(effectiveInvoiceMeta?.date || ''));
     pdf.save(fileName);
   } catch (err) {
     console.error('PDF generation error:', err);
