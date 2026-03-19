@@ -218,23 +218,21 @@ const buildFooterTextForPdf = (invoiceMeta: any, footerText?: string) => {
   const uiFooter = normalizeMultilineText(footerText);
   const metaFooter = normalizeMultilineText(invoiceMeta?.footerDetails);
   const systemFooter = normalizeMultilineText(invoiceMeta?.systemGeneratedFooterText);
-  const lines = [uiFooter, metaFooter]
+
+  const normalLines = [uiFooter, metaFooter]
     .flatMap((value) => value.split('\n'))
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line, index, arr) => arr.indexOf(line) === index)
+    .filter((line) => line !== SYSTEM_GENERATED_FOOTER_TEXT);
+
+  const systemLines = systemFooter
+    .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line, index, arr) => arr.indexOf(line) === index);
 
-  if (systemFooter) {
-    const systemLines = systemFooter
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .filter((line, index, arr) => arr.indexOf(line) === index);
-
-    return [...lines, ...systemLines].join('\n');
-  }
-
-  return lines.join('\n');
+  return [...normalLines, ...systemLines].join('\n');
 };
 
 const hasAuthorizedDetails = (invoiceMeta: any) => {
@@ -547,15 +545,41 @@ const drawBottomFooter = (
     pdf.setFontSize(8);
 
     const centerX = pdfWidth / 2;
-    const maxCenterWidth = pdfWidth - 120;
+    const maxCenterWidth = pdfWidth - 40;
+    const footerLines = footerBody
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
 
-    const startY = isCompact ? footerTop + 8 : metaValueY + 6;
-    const reservedBottomGap = 4.5;
-    const availableHeight = Math.max(0, pageBottomY - reservedBottomGap - startY);
-    const lineStep = 3.8;
-    const maxLines = Math.max(1, Math.floor(availableHeight / lineStep));
+    const systemLine = SYSTEM_GENERATED_FOOTER_TEXT;
+    const normalLines = footerLines.filter((line) => line !== systemLine);
+    const hasSystemLine = footerLines.includes(systemLine);
 
-    renderCenteredMultiline(pdf, footerBody, centerX, startY, maxCenterWidth, maxLines, lineStep);
+    const lastLineY = pageBottomY;
+    const gapBetweenLines = 3.8;
+
+    if (hasSystemLine) {
+      const systemWidth = pdf.getTextWidth(systemLine);
+      pdf.text(systemLine, centerX - systemWidth / 2, lastLineY);
+    }
+
+    if (normalLines.length > 0) {
+      const footerTextOnly = normalLines.join('\n');
+      const maxNormalLines = Math.max(1, hasSystemLine ? 2 : 3);
+      const normalStartY = hasSystemLine
+        ? lastLineY - gapBetweenLines * Math.min(maxNormalLines, normalLines.length)
+        : lastLineY - gapBetweenLines * (Math.min(maxNormalLines, normalLines.length) - 1);
+
+      renderCenteredMultiline(
+        pdf,
+        footerTextOnly,
+        centerX,
+        normalStartY,
+        maxCenterWidth,
+        maxNormalLines,
+        gapBetweenLines
+      );
+    }
   }
 };
 
@@ -599,7 +623,7 @@ export const generatePdf = async (
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
     const MARGIN_TOP_MM = hasAuth || hasSignatureImage ? 22 : 20;
-    const MARGIN_BOTTOM_MM = hasAuth || hasSignatureImage ? 32 : 26;
+    const MARGIN_BOTTOM_MM = hasAuth || hasSignatureImage ? 32 : 32;
 
     const avoidEls = Array.from(input.querySelectorAll('.avoid-break')) as HTMLElement[];
     avoidEls.forEach((el) => {

@@ -34,6 +34,13 @@ const toNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
+const normalizeMultiline = (value: unknown): string => {
+  return String(value ?? '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+};
+
 export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig, currencySymbol }) => {
   const purchaseData = data || {};
   const resolvedConfig = useMemo(
@@ -87,11 +94,9 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
 
       return (
         <div className="space-y-1">
-          <span className="block font-semibold text-black-800">{String(title || '')}</span>
-          {description ? <span className="block text-[11px] text-black-600">{description}</span> : null}
-          {hsnWithinCell ? (
-            <span className="block text-[11px] text-black-500">HSN/SAC: {hsnWithinCell}</span>
-          ) : null}
+          <span className="block font-semibold text-gray-800">{String(title || '')}</span>
+          {description ? <span className="block text-[11px] text-gray-600">{description}</span> : null}
+          {hsnWithinCell ? <span className="block text-[11px] text-gray-500">HSN/SAC: {hsnWithinCell}</span> : null}
         </div>
       );
     }
@@ -122,12 +127,33 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
   const totalsVisible = isSectionVisible(resolvedConfig, 'totals', true);
   const notesVisible = isSectionVisible(resolvedConfig, 'notes', true) && Boolean(purchaseData.notes);
 
+  const signatureUrl = String(
+    purchaseData.authorizedSignatureUrl ?? resolvedConfig.authorizedBy?.signatureUrl ?? ''
+  ).trim();
+  const personName = String(
+    purchaseData.authorizedPersonName ?? resolvedConfig.authorizedBy?.personName ?? ''
+  ).trim();
+  const designation = String(
+    purchaseData.authorizedDesignation ?? resolvedConfig.authorizedBy?.designation ?? ''
+  ).trim();
+  const hasAuthText = personName.length > 0 || designation.length > 0;
+
+  const footerDescription = normalizeMultiline(purchaseData.footerDetails);
+  const systemGeneratedMessage = normalizeMultiline(purchaseData.systemGeneratedFooterText);
+  const showFooterDescription = footerDescription.length > 0;
+  const showSystemGeneratedMessage = systemGeneratedMessage.length > 0;
+
   return (
     <div className="bg-white p-8 font-sans text-sm text-black">
       <style>{`
         @media print {
           .print-avoid-break { break-inside: avoid; }
         }
+        .auth-by-tight { margin-top: 6px !important; padding-top: 0px !important; line-height: 1.15 !important; }
+        .auth-by-tight * { line-height: 1.15 !important; }
+        .auth-by-tight p { margin-top: 2px !important; margin-bottom: 0px !important; }
+        .auth-by-tight .auth-by-name { margin-top: 8px !important; }
+        .auth-by-tight .auth-by-des { margin-top: 4px !important; }
       `}</style>
 
       {headerVisible && (
@@ -140,7 +166,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                 </h1>
               )}
               {isFieldVisible(resolvedConfig, 'header', 'companyAddressLabel') && purchaseData.companyAddress ? (
-                <p className="mt-1 whitespace-pre-line text-sm text-black">{purchaseData.companyAddress}</p>
+                <p className="mt-1 whitespace-pre-line text-sm text-gray-700">{purchaseData.companyAddress}</p>
               ) : null}
             </div>
 
@@ -150,7 +176,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                   {purchaseData.invoiceTitle || getFieldLabel(resolvedConfig, 'header', 'title', 'PURCHASE ORDER')}
                 </h2>
               )}
-              <div className="mt-2 text-sm text-black">
+              <div className="mt-2 text-sm text-gray-700">
                 {isFieldVisible(resolvedConfig, 'header', 'poNumberLabel') && (
                   <div className="font-semibold">
                     {documentNumberLabel}: {purchaseData.quotationNumber || ''}
@@ -172,49 +198,48 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
           {supplierVisible && (
             <div className="space-y-1">
               {isFieldVisible(resolvedConfig, 'supplier', 'heading') && (
-                <h3 className="text-sm font-bold text-black-900">
-                  {partySectionLabel}
-                </h3>
+                <h3 className="text-sm font-bold text-gray-900">{partySectionLabel}</h3>
               )}
-              {purchaseData.clientName ? <p className="text-lg font-semibold text-black-800">{purchaseData.clientName}</p> : null}
-              {purchaseData.clientCompany ? <p className="text-sm text-black-700">{purchaseData.clientCompany}</p> : null}
+              {purchaseData.clientName ? <p className="text-lg font-semibold text-gray-800">{purchaseData.clientName}</p> : null}
+              {purchaseData.clientCompany ? <p className="text-sm text-gray-700">{purchaseData.clientCompany}</p> : null}
               {isFieldVisible(resolvedConfig, 'supplier', 'addressLabel') && purchaseData.clientAddress ? (
-                <p className="whitespace-pre-line text-sm text-black-700">{purchaseData.clientAddress}</p>
+                <p className="whitespace-pre-line text-sm text-gray-700">{purchaseData.clientAddress}</p>
               ) : null}
               {isFieldVisible(resolvedConfig, 'supplier', 'contactLabel') && purchaseData.clientPhone ? (
-                <p className="text-sm text-black-700">
+                <p className="text-sm text-gray-700">
                   <strong>{getFieldLabel(resolvedConfig, 'supplier', 'contactLabel', 'Contact')}:</strong>{' '}
                   {purchaseData.clientPhone}
                 </p>
               ) : null}
             </div>
           )}
+
           {shipToVisible && (
             <div className="space-y-1">
               {isFieldVisible(resolvedConfig, 'shipTo', 'heading') && (
-                <h3 className="text-sm font-bold text-black-900">
+                <h3 className="text-sm font-bold text-gray-900">
                   {getSectionLabel(resolvedConfig, 'shipTo', 'SHIP TO') || getFieldLabel(resolvedConfig, 'shipTo', 'heading', 'SHIP TO')}
                 </h3>
               )}
               {isFieldVisible(resolvedConfig, 'shipTo', 'addressLabel') &&
               (purchaseData.shippingAddressLabel || purchaseData.deliveryAddress) ? (
-                <p className="whitespace-pre-line text-sm text-black-700">
+                <p className="whitespace-pre-line text-sm text-gray-700">
                   {purchaseData.shippingAddressLabel || purchaseData.deliveryAddress}
                 </p>
               ) : null}
               {purchaseData.shippingAddressContactLabel ? (
-                <p className="text-sm text-black-700">
+                <p className="text-sm text-gray-700">
                   <strong>Contact:</strong> {purchaseData.shippingAddressContactLabel}
                 </p>
               ) : null}
               <div className="space-y-1">
                 {isFieldVisible(resolvedConfig, 'shipTo', 'requisitionerLabel') && purchaseData.requisitioner ? (
-                  <p className="text-sm">
+                  <p className="text-sm text-gray-700">
                     <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'requisitionerLabel', 'Requisitioner')}:</strong>{' '}
                     {purchaseData.requisitioner}
                   </p>
                 ) : null}
-                <div className="flex flex-wrap gap-3 text-sm text-black-700">
+                <div className="flex flex-wrap gap-3 text-sm text-gray-700">
                   {isFieldVisible(resolvedConfig, 'shipTo', 'shipViaLabel') && purchaseData.shipVia ? (
                     <p>
                       <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'shipViaLabel', 'Ship Via')}:</strong>{' '}
@@ -223,7 +248,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                   ) : null}
                   {isFieldVisible(resolvedConfig, 'shipTo', 'fobLabel') && purchaseData.fob ? (
                     <p>
-                      <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'fobLabel', 'F.O.B.')}</strong>{' '}
+                      <strong>{getFieldLabel(resolvedConfig, 'shipTo', 'fobLabel', 'F.O.B.')}:</strong>{' '}
                       {purchaseData.fob}
                     </p>
                   ) : null}
@@ -235,9 +260,9 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
       )}
 
       <section className="print-avoid-break mb-6">
-        <div className="overflow-hidden rounded border border-black-400">
+        <div className="overflow-hidden rounded border border-gray-300">
           <table className="w-full border-collapse text-left text-xs">
-            <thead className="bg-black-200 uppercase tracking-wide text-bold text-solid black">
+            <thead className="bg-gray-200 uppercase tracking-wide text-black">
               <tr>
                 {tableColumns.map((column) => (
                   <th
@@ -253,7 +278,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
             <tbody>
               {itemsWithCalculations.length === 0 ? (
                 <tr>
-                  <td colSpan={tableColumns.length} className="p-4 text-center text-sm text-black-500">
+                  <td colSpan={tableColumns.length} className="p-4 text-center text-sm text-gray-500">
                     No items added.
                   </td>
                 </tr>
@@ -261,7 +286,7 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
                 itemsWithCalculations.map((item: any, index: number) => (
                   <tr
                     key={`${item.service}-${index}`}
-                    className={`avoid-break border-t border-black-200 ${index % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
+                    className={`avoid-break border-t border-gray-200 ${index % 2 === 0 ? 'bg-white' : 'bg-violet-50'}`}
                   >
                     {tableColumns.map((column) => {
                       const content = renderCell(item, column.key, column.formatter || 'text');
@@ -334,21 +359,32 @@ export const PurchaseOrderTemplate: React.FC<POProps> = ({ data, templateConfig,
         </div>
       )}
 
-      <AuthorizedBy
-        signatureUrl={purchaseData.authorizedSignatureUrl}
-        personName={purchaseData.authorizedPersonName}
-        designation={purchaseData.authorizedDesignation}
-        align="right"
-        label={resolvedConfig.authorizedBy?.label}
-        visible={resolvedConfig.authorizedBy?.visible !== false}
-      />
+      <div className={hasAuthText ? 'auth-by-tight' : ''}>
+        <AuthorizedBy
+          signatureUrl={signatureUrl || undefined}
+          personName={personName || undefined}
+          designation={designation || undefined}
+          align={(resolvedConfig.authorizedBy?.align as any) ?? 'right'}
+          label={resolvedConfig.authorizedBy?.label}
+          visible={resolvedConfig.authorizedBy?.visible !== false}
+        />
+      </div>
 
       {notesVisible && (
-        <div className="no-print-footer mt-6 text-xs text-black-600">
-          <p>
+        <div className="no-print-footer mt-6 text-xs text-gray-600">
+          <p className="whitespace-pre-line">
             <strong>{getFieldLabel(resolvedConfig, 'notes', 'notesHeading', 'Notes')}:</strong>{' '}
             {purchaseData.notes}
           </p>
+        </div>
+      )}
+
+      {(showFooterDescription || showSystemGeneratedMessage) && (
+        <div className="no-print-footer mt-6 border-t border-gray-300 pt-3 text-center text-xs text-gray-600">
+          {showFooterDescription ? <div className="whitespace-pre-line">{footerDescription}</div> : null}
+          {showSystemGeneratedMessage ? (
+            <div className={showFooterDescription ? 'mt-1' : ''}>{systemGeneratedMessage}</div>
+          ) : null}
         </div>
       )}
     </div>

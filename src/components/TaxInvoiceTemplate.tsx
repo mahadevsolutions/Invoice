@@ -86,10 +86,6 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const documentNumberLabel = invoiceData.documentNumberLabel || 'Invoice Number';
   const documentDateLabel = invoiceData.documentDateLabel || 'Invoice Date';
   const buyerSectionLabel = invoiceData.partySectionLabel || 'Billed To';
-  const systemGeneratedFooterText =
-    typeof invoiceData.systemGeneratedFooterText === 'string'
-      ? invoiceData.systemGeneratedFooterText
-      : 'This is an electronically generated document, no signature is required.';
 
   const tableColumns = useMemo(
     () =>
@@ -237,11 +233,32 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
   const destinationLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'destinationLabel', 'Destination');
   const termsLabel = getFieldLabel(resolvedConfig, 'orderMeta', 'termsLabel', 'Terms of Delivery');
 
+  const footerDescription = normalizeMultiline(invoiceData.footerDetails);
+  const systemGeneratedMessage = normalizeMultiline(invoiceData.systemGeneratedFooterText);
+  const showFooterDescription = footerDescription.length > 0;
+  const showSystemGeneratedMessage = systemGeneratedMessage.length > 0;
+  const showFixedFooter = showFooterDescription || showSystemGeneratedMessage;
+
   return (
-    <div className="bg-white p-6 font-sans text-xs text-black">
+    <div className="tax-invoice-template bg-white p-6 pb-24 font-sans text-xs text-black">
       <style>{`
+        @page {
+          margin: 16mm 12mm 24mm 12mm;
+        }
         @media print {
           .print-avoid-break { break-inside: avoid; }
+          .tax-invoice-template {
+            padding-bottom: 90px !important;
+          }
+          .page-footer-fixed {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            padding: 0 12mm 8mm 12mm;
+            z-index: 9999;
+          }
         }
         .text-xxs { font-size: 0.65rem; }
         .auth-by-tight { margin-top: 6px !important; padding-top: 0px !important; line-height: 1.15 !important; }
@@ -249,6 +266,15 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
         .auth-by-tight p { margin-top: 2px !important; margin-bottom: 0px !important; }
         .auth-by-tight .auth-by-name { margin-top: 8px !important; }
         .auth-by-tight .auth-by-des { margin-top: 4px !important; }
+        .page-footer-fixed {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: #ffffff;
+          padding: 0 24px 16px 24px;
+          z-index: 9999;
+        }
       `}</style>
 
       {(showTitle || showSubject) && (
@@ -324,7 +350,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                 {tableColumns.map((column) => (
                   <th
                     key={column.key}
-                    className="text-center bg-violet-400 p-2"
+                    className="bg-violet-400 p-2 text-center"
                     style={column.width ? { width: `${column.width}%` } : undefined}
                   >
                     {column.label}
@@ -348,10 +374,7 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
                     {tableColumns.map((column) => {
                       const content = renderCell(item, column.key, column.formatter || 'text');
                       return (
-                        <td
-                          key={column.key}
-                          className="text-center align-top p-2"
-                        >
+                        <td key={column.key} className="p-2 text-center align-top">
                           {content}
                         </td>
                       );
@@ -537,12 +560,18 @@ export const TaxInvoiceTemplate: React.FC<TaxInvoiceProps> = ({ data, templateCo
               .filter(Boolean)
               .map((field) => renderField('bankDetails', field))}
           </div>
-          {systemGeneratedFooterText ? (
-            <div className="mt-3 whitespace-pre-line text-center text-[11px] text-gray-600">
-              {systemGeneratedFooterText}
-            </div>
-          ) : null}
         </footer>
+      )}
+
+      {showFixedFooter && (
+        <div className="page-footer-fixed text-center text-[11px] leading-[1.3] text-gray-600">
+          {showFooterDescription && <div className="whitespace-pre-line">{footerDescription}</div>}
+          {showSystemGeneratedMessage && (
+            <div className={showFooterDescription ? 'mt-1' : ''}>
+              {systemGeneratedMessage}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
